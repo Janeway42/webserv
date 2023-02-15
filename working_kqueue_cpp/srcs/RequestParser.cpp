@@ -193,6 +193,9 @@ void    Request::appendToRequest(const char *str) {
 			_headerDone = true;
 			std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
 			parseHeader(_header);
+
+			parsePath(_data.getHttpPath());	// INSERTED JAKA !!!
+
 			if (_data.getRequestContentLength() == 0){
 				_doneParsing = true;
 				return ;

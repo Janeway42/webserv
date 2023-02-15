@@ -28,15 +28,15 @@ namespace data {
 			RequestData _data;
 			std::string _header;
 			std::string _temp;
-			bool _headerDone;
+			bool		_headerDone;
 			std::string _body;
         	std::string keyParser(std::string & lineContent, std::string keyToFind);
-			int appendLastChunkToBody(std::string::size_type it);
-			int appendToBody(std::string request);
+			int 		appendLastChunkToBody(std::string::size_type it);
+			int 		appendToBody(std::string request);
 
-			bool _doneParsing;
-			bool _errorRequest;
-			bool _earlyClose;
+			bool		_doneParsing;
+			bool 		_errorRequest;
+			bool 		_earlyClose;
 			std::time_t _startTime;
 
 
@@ -50,6 +50,7 @@ namespace data {
 
 			/** Methods */
 			void    parseHeader(std::string header);
+			int		parsePath(std::string str);
 			void    appendToRequest(const char *str);
 
 			int     checkStoredVars();
@@ -69,7 +70,6 @@ namespace data {
 			std::string getTemp();
 	};
 
-	
 
 } // data
 #endif // WEBSERV_REQUEST_PARSER_HPP
