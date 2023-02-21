@@ -180,11 +180,11 @@ void Server::sendResponse(struct kevent& event)
 		if (temp.find(".png") != std::string::npos)
 			sendImmage(event, "immage.png");
 		else 
-			sendResponseFile(event, "index_just_text.html");
+			//sendResponseFile(event, "index_just_text.html");
 			//sendResponseFile(event, "index_just_image.html");
 			// sendResponseFile(event, "index_post_form.html");
 			// sendResponseFile(event, "index_get_form.html");
-			//	sendResponseFile(event, "index_dummy.html");
+			sendResponseFile(event, "index_dummy.html");
 
 		if (removeEvent(event, EVFILT_WRITE) == 1)
 			throw ServerException("failed kevent EV_DELETE client - send success");

@@ -34,7 +34,6 @@ std::string removeLastFolderFromPath(std::string path) {
 std::string appendHTMLbody(std::string line, std::string path, std::string & htmlStr) {
 	int	found;
 
-
 	found = line.find_last_of(" ");
 	std::string lastName = line.substr(found + 1, std::string::npos);
 	
@@ -123,9 +122,9 @@ std::string storeFolderContent(char *path) {
 
 
 
-int main()
+int mainXXXXX()
 {
-	std::string path = "./_folderA/folderB/";
+	std::string path = "./_folderA/folderB/index.html";
 	std::string folderContentStr = storeFolderContent((char*)path.c_str());
 	makeHtmlString(folderContentStr, path);
 
