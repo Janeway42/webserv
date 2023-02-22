@@ -4,12 +4,137 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <unistd.h>
+
 
 // #include "_colors.h"
 #include "../includes/RequestParser.hpp"
 
 
 namespace data {
+
+
+void runExecve(char *ENV[], char *arr[]) {
+	std::cout << BLU "START runExeve\n" RES;
+
+	int    		fd[2];
+	pid_t		retFork;
+	std::string	incomingStr;
+
+	if (pipe(fd) == -1)
+		std::cout << "Error: Pipe failed\n";
+	retFork = fork();
+
+	if (retFork == 0) {
+		std::cout << "    Start CHILD\n";
+		if (retFork < 0)
+			std::cout << "Error: Fork failed\n";
+		dup2(fd[1], 1);
+		close(fd[0]);
+
+		//char *arr[4] = {(char*)"/bin/ls", (char*)"-la", path, NULL};
+		int ret = execve(arr[0], arr, ENV);
+		std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
+	}
+	else {
+		sleep(1);
+		close(fd[1]);
+		//char buff[100];
+		dup2(fd[0], 0);
+
+		// for (int ret = 1; ret != 0; ) {
+		// 	memset(buff, '\0', 100);
+		// 	ret = read(fd[0], buff, 99);
+		// 	//std::cout << "Returned buffer, ret " << ret << "\n";
+		// 	incomingStr.append(buff);
+		// }
+		//std::cout << "\nIncoming [" << incomingStr << "]\n";
+	}    
+}
+
+
+
+
+
+void Request::callCGI(RequestData reqData) {
+	std::cout << RED "START CALL_CGI\n" RES;
+
+	//char *vars[] = {(char*)"CITY=Amsterdam", (char*)"STREET=Singel"};
+	// const std::string ENV[ 24 ] = {
+	char* ENV[24] = {
+		(char*)"COMSPEC", (char*)"DOCUMENT_ROOT", (char*)"GATEWAY_INTERFACE", (char*)"HTTP_ACCEPT", (char*)"HTTP_ACCEPT_ENCODING",             
+		(char*)"HTTP_ACCEPT_LANGUAGE", (char*)"HTTP_CONNECTION", (char*)"HTTP_HOST", (char*)"HTTP_USER_AGENT", (char*)"PATH",            
+		(char*)"QUERY_STRING", (char*)"REMOTE_ADDR", (char*)"REMOTE_PORT", (char*)"REQUEST_METHOD", (char*)"REQUEST_URI", (char*)"SCRIPT_FILENAME",
+		(char*)"SCRIPT_NAME", (char*)"SERVER_ADDR", (char*)"SERVER_ADMIN", (char*)"SERVER_NAME",(char*)"SERVER_PORT",(char*)"SERVER_PROTOCOL",     
+		(char*)"SERVER_SIGNATURE", (char*)"SERVER_SOFTWARE"
+	};
+
+
+	// Get formData, count all keys, and them to **ENV array
+	size_t nrKeys = 0;
+	std::map<std::string, std::string> formData = reqData.getFormData();
+	std::map<std::string, std::string>::iterator it;
+	for (it = formData.begin(); it != formData.end(); it++, nrKeys++)
+	//{ std::cout << "NrKeys " << nrKeys << "\n"; }
+
+
+	// Make new 2D array with all envs AND query keys
+	// size_t i = 0;
+	// std::string arr[24 + nrKeys];
+	// const char *arr[3 + nrKeys];
+	// for (i = 0; i < 3; i++) {
+	// 	arr[i] = ENV[i];
+	// }
+
+
+	// Store query keys to the ENV array, after the mandatory variables
+	// Give each key the submitted value from the formData Map
+	//		THIS SHOULD BE DONE INSIDE CGI SCRIPT - RECOGNIZING THE QUERY KEY PAIRS
+	// for (it = formData.begin(); it != formData.end(); it++, i++) {
+	// 	arr[i] = (it->first).c_str();
+	// 	setenv((arr[i]).c_str(), (it->second).c_str(), 0);
+	// }
+
+	// Set the mandatory variables (not sure if necessary)
+	setenv("SERVER_NAME", "Servy", 0);
+	setenv("QUERY_STRING", reqData.getHttpPath().c_str(), 0); // IT MUST BE THE CORRECT QUERY STRING
+
+
+
+	// Just print out the whole ENV array
+	// for (i = 0; i < 24 + nrKeys; i++) {
+	// 	std::cout << MAG << i << "  FormList [" << arr[i] << "]\n" RES;
+	// }
+	//std::cout << "getenv SERVERNAME: " << getenv("SERVER_NAME") << "\n";
+	//std::cout << "getenv street: " << getenv("street") << "\n";
+
+
+	// Prepare the array of the correct command/cgi file to be executed
+	// The path of the executable must be according to the 'action file' from the URL
+	// char *args[2];
+	// args[0] = (char *)"../jaka_cgi/helloNamex.cgi";   // Make sure the path is correct on Mac/Linux
+	// args[1] = NULL;
+
+
+	char *args[3];
+	args[0] = (char *)"/usr/bin/php";   // Make sure the path is correct on Mac/Linux
+	args[1] = (char *)"../jaka_cgi/_somePhp.php";
+	args[2] = NULL;
+
+
+	runExecve(ENV, args);
+
+	//int ret = execve(args[0], args, vars);
+	//printf("Execve failed: %d\n", ret);
+}
+
+
+
+
+
+
+
+
 
 // Some of arguments not used
 void printPathParts(std::string str, std::string strTrim, std::string path,
@@ -116,6 +241,9 @@ std::map<std::string, std::string> Request::storeFormData(std::string &pathForm)
 	while (std::getline(iss, line, '&'))
 		formList.push_back(line);
 
+	_data.setFormList(formList);
+
+	// MAYBE THE FORM MAP WILL NOT BE NEEDED
 	std::string							key, val;
 	std::map<std::string, std::string>	formDataMap;
 	std::vector<std::string>::iterator	it;
@@ -124,6 +252,7 @@ std::map<std::string, std::string> Request::storeFormData(std::string &pathForm)
 		std::stringstream iss(*it);
 	 	std::getline(iss, key, '=') >> val;
 		formDataMap[key] = val;
+		//std::cout << YEL "  ... vector [" << *it << "]\n" RES;
 	}
 	_data.setFormData(formDataMap);
 	return (formDataMap);
@@ -213,7 +342,12 @@ int Request::parsePath(std::string str) {
 	}
 
 	checkIfFileExists(path);	// What in case of root only "/"  ???
-	 checkTypeOfFile(path);
+	checkTypeOfFile(path);
+
+	callCGI(getRequestData());
+
+
+
 	//checkTypeOfFile(_data.getPathLastWord());
 	//std::cout << RED "Last word " << _data.getPathLastWord() << RES "\n";
 	return (0);

@@ -66,6 +66,8 @@ namespace data {
 			std::map<std::string, std::string>	storeFormData(std::string &pq);
 			void	storePathParts_and_FormData(std::string path);
 			void	storePath_and_FolderName(std::string path);
+			void 	callCGI(RequestData reqData);
+			
 
 
 			int     checkStoredVars();

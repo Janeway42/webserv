@@ -32,7 +32,7 @@ namespace data {
 			bool _doneParsing;
 			bool _errorRequest;
 
-        	std::string keyParser(std::string & lineContent, std::string keyToFind);
+        //	std::string keyParser(std::string & lineContent, std::string keyToFind);
 			int appendLastChunkToBody(std::string::size_type it);
 			int appendToBody(std::string request);
 

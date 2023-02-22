@@ -28,7 +28,9 @@ class RequestData {
 		// PARTS OF PATH AND FORM DATA
 		std::string _pathFirstPart;                      // ie: /kostja.se/folderA/folderB/
 		std::string _pathLastWord;                       // ie: /index.html  OR   /folderC/
-		std::map<std::string, std::string> _formData;
+		std::map<std::string, std::string>	_formData;	 // maybe not needed, maybe Vector list will be enough
+		std::vector<std::string>			_formList;
+
 
 
 	public:
@@ -49,7 +51,9 @@ class RequestData {
 
 		const std::string 							getPathFirstPart( )const;
 		const std::string							getPathLastWord() const;
-		std::map<std::string, std::string>	getFormData() const;
+
+		std::vector<std::string>					getFormList() const;
+		std::map<std::string, std::string>			getFormData() const;
 		// const std::map<std::string, std::string>	getFormData() const;
 
 
@@ -68,6 +72,7 @@ class RequestData {
 		// Path parts and Form Data
 		void setPathFirstPart(std::string path);
 		void setPathLastWord(std::string path);
+		void setFormList(std::vector<std::string>);
 		void setFormData(std::map<std::string, std::string>);
 
 };

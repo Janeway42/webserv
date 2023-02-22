@@ -19,6 +19,7 @@ RequestData::RequestData() {
 	
 	_pathFirstPart		= "default";
 	_pathLastWord		= "default";
+//	_formList			= NULL;	// ???
 //	_formData			= NULL;	// ???
 }
 
@@ -73,6 +74,11 @@ std::map<std::string, std::string> RequestData::getFormData() const {	// Cannot 
 	return _formData;													// because iterator won't work
 }
 
+std::vector<std::string> RequestData::getFormList() const {	// Cannot return const
+	return _formList;													// because iterator won't work
+}
+
+
 
 /** ########################################################################## */
 /** Request Setters */
@@ -124,6 +130,11 @@ void RequestData::setPathLastWord(std::string pathLastWord) {
 void RequestData::setFormData(std::map<std::string, std::string> formData) {
 	_formData = formData;
 }
+
+void RequestData::setFormList(std::vector<std::string> formList) {
+	_formList = formList;
+}
+
 
 
 } // data
