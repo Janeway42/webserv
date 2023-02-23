@@ -60,13 +60,13 @@ namespace data {
 
 			/** Methods */
 			void    							parseHeader(std::string header);
-			int									parsePath(std::string str);
-			void    							appendToRequest(const char *str);
+			int									parsePath(std::string str, int fdClient);
+			void    							appendToRequest(const char *str, int fdClient);
 			void								storeBody(std::istringstream &iss);
 			std::map<std::string, std::string>	storeFormData(std::string &pq);
 			void	storePathParts_and_FormData(std::string path);
 			void	storePath_and_FolderName(std::string path);
-			void 	callCGI(RequestData reqData);
+			void 	callCGI(RequestData reqData, int fdClient);
 			
 
 

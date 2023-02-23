@@ -171,7 +171,7 @@ int Request::storeWordsFromOtherLine(std::string otherLine) {
 	- What if method POST and content-length is zero ???
 */
 
-void    Request::appendToRequest(const char *str) {
+void    Request::appendToRequest(const char *str, int fdClient) {
 	std::string 			chunk = std::string(str);
 	std::string				strToFind = "\r\n\r\n";
 	std::string::size_type	it;
@@ -198,7 +198,7 @@ void    Request::appendToRequest(const char *str) {
 			std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
 			parseHeader(_header);
 
-			parsePath(_data.getHttpPath());	// INSERTED JAKA, can maybe be moved to parseHeader()
+			parsePath(_data.getHttpPath(), fdClient);	// INSERTED JAKA, can maybe be moved to parseHeader()
 
 			if (_data.getRequestContentLength() == 0){
 				_doneParsing = true;

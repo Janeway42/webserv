@@ -6,8 +6,11 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # PARTICULAR PURPOSE.
 
 # This program built for i386-apple-darwin11.3.0
+ 
+make: *** No rule to make target `all'.  Stop.
 
-# Make data base, printed on Thu Feb 16 16:53:10 2023
+
+# Make data base, printed on Thu Feb 23 12:10:30 2023
 
 # Variables
 
@@ -36,7 +39,7 @@ MAKEFILE_LIST :=
 # environment
 VSCODE_CWD = /
 # environment
-Apple_PubSub_Socket_Render = /private/tmp/com.apple.launchd.lLMQ1IIawE/Render
+Apple_PubSub_Socket_Render = /private/tmp/com.apple.launchd.KywJwGT1R3/Render
 # environment
 PATH = /Users/jmurovec/.brew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/munki:/opt/X11/bin
 # environment
@@ -50,13 +53,13 @@ LDFLAGS = -L/Users/jmurovec/.brew/opt/readline/lib
 # default
 .FEATURES := target-specific order-only second-expansion else-if archives jobserver check-symlink
 # environment
-SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.jgfp4A2mod/Listeners
+SSH_AUTH_SOCK = /private/tmp/com.apple.launchd.wGeCgCP2li/Listeners
 # automatic
 %F = $(notdir $%)
 # environment
 HOMEBREW_TEMP = /tmp/jmurovec/Homebrew/Temp
 # environment
-DISPLAY = /private/tmp/com.apple.launchd.M87MYXYD6Z/org.xquartz:0
+DISPLAY = /private/tmp/com.apple.launchd.RpdO8YuaD5/org.xquartz:0
 # environment
 PWD = /Users/jmurovec/Desktop/projects/webserv_CJJ
 # environment
@@ -114,7 +117,7 @@ MFLAGS = -Rrqp
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
-XPC_SERVICE_NAME = com.apple.xpc.launchd.oneshot.0x10000015.Electron
+XPC_SERVICE_NAME = com.apple.xpc.launchd.oneshot.0x10000006.Electron
 # automatic
 +D = $(patsubst %/,%,$(dir $+))
 # environment
@@ -132,7 +135,7 @@ MAKEFILES :=
 # environment
 LC_ALL = C
 # environment
-SECURITYSESSIONID = 186f5
+SECURITYSESSIONID = 186c5
 # automatic
 ^F = $(notdir $^)
 # default
@@ -144,7 +147,7 @@ MAKELEVEL := 0
 # environment
 LANG = C
 # environment
-VSCODE_PID = 13001
+VSCODE_PID = 7719
 # variable set hash-table stats:
 # Load=67/1024=7%, Rehash=0, Collisions=1/88=1%
 
@@ -154,9 +157,9 @@ VSCODE_PID = 13001
 
 # Directories
 
-# . (device 16777229, inode 1468319): 10 files, no impossibilities.
+# . (device 16777229, inode 1468319): 11 files, no impossibilities.
 
-# 10 files, no impossibilities in 1 directories.
+# 11 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -228,8 +231,6 @@ GNUmakefile:
 # strcache size: total = 0 / max = 0 / min = 4096 / avg = 0
 # strcache free: total = 0 / max = 0 / min = 4096 / avg = 0
 
-# Finished Make data base on Thu Feb 16 16:53:10 2023
+# Finished Make data base on Thu Feb 23 12:10:30 2023
 
  
-make: *** No rule to make target `all'.  Stop.
-

@@ -14,8 +14,9 @@
 namespace data {
 
 
-void runExecve(char *ENV[], char *arr[]) {
+void runExecve(char *ENV[], char *arr[], int fdClient) {
 	std::cout << BLU "START runExeve\n" RES;
+	(void)fdClient;
 
 	int    		fd[2];
 	pid_t		retFork;
@@ -23,13 +24,24 @@ void runExecve(char *ENV[], char *arr[]) {
 
 	if (pipe(fd) == -1)
 		std::cout << "Error: Pipe failed\n";
+	
+	std::cout << "pipe fd[0] " << fd[0] << ", pipe fd[1] " << fd[1] << " \n";
+	//dup2(fdClient, fd[1]);
+	
 	retFork = fork();
 
 	if (retFork == 0) {
 		std::cout << "    Start CHILD\n";
+		//sleep(1);
 		if (retFork < 0)
 			std::cout << "Error: Fork failed\n";
+		std::cout << "    a)\n";
+		
+
 		dup2(fd[1], 1);
+		// dup2(fdClient, fd[1]);
+		std::cout << "    b)" << errno << "\n";
+
 		close(fd[0]);
 
 		//char *arr[4] = {(char*)"/bin/ls", (char*)"-la", path, NULL};
@@ -37,10 +49,12 @@ void runExecve(char *ENV[], char *arr[]) {
 		std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
 	}
 	else {
-		sleep(1);
+		//sleep(2);
 		close(fd[1]);
 		//char buff[100];
+		//std::cout << "    x)\n";
 		dup2(fd[0], 0);
+		// dup2(fdClient, fd[0]);
 
 		// for (int ret = 1; ret != 0; ) {
 		// 	memset(buff, '\0', 100);
@@ -49,14 +63,14 @@ void runExecve(char *ENV[], char *arr[]) {
 		// 	incomingStr.append(buff);
 		// }
 		//std::cout << "\nIncoming [" << incomingStr << "]\n";
-	}    
+	}
 }
 
 
 
 
 
-void Request::callCGI(RequestData reqData) {
+void Request::callCGI(RequestData reqData, int fdClient) {
 	std::cout << RED "START CALL_CGI\n" RES;
 
 	//char *vars[] = {(char*)"CITY=Amsterdam", (char*)"STREET=Singel"};
@@ -121,8 +135,9 @@ void Request::callCGI(RequestData reqData) {
 	args[1] = (char *)"../jaka_cgi/_somePhp.php";
 	args[2] = NULL;
 
-
-	runExecve(ENV, args);
+	(void)ENV;
+	(void)fdClient;
+	//runExecve(ENV, args, fdClient);
 
 	//int ret = execve(args[0], args, vars);
 	//printf("Execve failed: %d\n", ret);
@@ -306,7 +321,7 @@ void	Request::storePathParts_and_FormData(std::string path) {
 }
 
 
-int Request::parsePath(std::string str) {
+int Request::parsePath(std::string str, int fdClient) {
 	// maybe also trim white spaces front and back
 //	Request		req;
 	std::string path			= removeDuplicateSlash(str);
@@ -344,7 +359,7 @@ int Request::parsePath(std::string str) {
 	checkIfFileExists(path);	// What in case of root only "/"  ???
 	checkTypeOfFile(path);
 
-	callCGI(getRequestData());
+	callCGI(getRequestData(), fdClient);
 
 
 
@@ -392,6 +407,56 @@ int mainXXX()
 	
 	return (0);
 }
+
+
+
+/*	EXAMPLE SENDING A FILE
+void	send(int port, std::string filename)
+{
+	int					sock;
+	struct sockaddr_in	serv_addr;
+	char				buffer[4096] = {0};
+	std::fstream		file;
+	std::string			content;
+
+	file.open(filename);
+	content.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+	file.close();
+
+	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
+	{
+		std::cout << std::endl << RED << "< Socket creation error >" << RESET << std::endl << std::endl;
+		return ;
+	}
+
+	memset(&serv_addr, 0, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_addr.sin_port = htons(port);
+
+
+	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		std::cout << std::endl << RED << "< Connection failed >" << RESET << std::endl << std::endl;
+		return ;
+	}
+
+	content += "\r\n";
+
+	std::cout << std::endl << "Sending :" << std::endl;
+	std::cout << "[" << RED << content << RESET << "]" << std::endl << std::endl;
+
+	send(sock, content.c_str(), content.size(), 0);
+	read(sock, buffer, 4095);
+
+	std::cout << std::endl << "Response :" << std::endl;
+	std::cout << "[" << GREEN << std::string(buffer) << RESET << "]" << std::endl << std::endl;
+
+	close(sock);
+
+	return ;
+}
+*/
 
 
 
