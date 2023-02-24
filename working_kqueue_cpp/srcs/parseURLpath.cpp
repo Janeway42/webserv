@@ -22,6 +22,16 @@ void runExecve(char *ENV[], char *arr[], int fdClient) {
 	pid_t		retFork;
 	std::string	incomingStr;
 
+//	IT MAYBE NEEDS ALSO:
+//	To make fd nonblocking
+//		fcntl(_listening_socket, F_SETFL, O_NONBLOCK);
+//	Maybe with a new fd, a new event (struct) must be populated, something like this:
+//		newClient(evList[i]);
+//		EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, storage); 
+//		EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, storage); 
+
+
+
 	if (pipe(fd) == -1)
 		std::cout << "Error: Pipe failed\n";
 	
@@ -38,22 +48,30 @@ void runExecve(char *ENV[], char *arr[], int fdClient) {
 		std::cout << "    a)\n";
 		
 
-		dup2(fd[1], 1);
+	//	dup2(fd[1], 1);
 		// dup2(fdClient, fd[1]);
 		std::cout << "    b)" << errno << "\n";
 
-		close(fd[0]);
+	//	close(fd[0]);
 
-		//char *arr[4] = {(char*)"/bin/ls", (char*)"-la", path, NULL};
-		int ret = execve(arr[0], arr, ENV);
+		(void)ENV;
+		(void)arr;
+		// LS -LA WORKING
+		// char *arr[3] = {(char*)"/bin/ls", (char*)"-la", NULL};
+		// int ret = execve(arr[0], arr, NULL);
+		// std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
+
+		// MY COMMAND 
+		//char *arr[3] = {(char*)"/bin/ls", (char*)"-la", NULL};
+		int ret = execve(arr[0], arr, NULL);
 		std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
 	}
 	else {
 		//sleep(2);
-		close(fd[1]);
+	//	close(fd[1]);
 		//char buff[100];
 		//std::cout << "    x)\n";
-		dup2(fd[0], 0);
+	//	dup2(fd[0], 0);
 		// dup2(fdClient, fd[0]);
 
 		// for (int ret = 1; ret != 0; ) {
@@ -132,12 +150,12 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 	char *args[3];
 	args[0] = (char *)"/usr/bin/php";   // Make sure the path is correct on Mac/Linux
-	args[1] = (char *)"../jaka_cgi/_somePhp.php";
+	args[1] = (char *)"./jaka_cgi/_somePhp.php"; // MUST BE WITH A DOT !!
 	args[2] = NULL;
 
-	(void)ENV;
-	(void)fdClient;
-	//runExecve(ENV, args, fdClient);
+	// (void)ENV;
+	// (void)fdClient;
+	runExecve(ENV, args, fdClient);
 
 	//int ret = execve(args[0], args, vars);
 	//printf("Execve failed: %d\n", ret);

@@ -41,7 +41,7 @@ Server::Server()
 		throw ServerException(("failed kq"));
 
 	EV_SET(&evSet, _listening_socket, EVFILT_READ, EV_ADD | EV_CLEAR, NOTE_WRITE	, 0, NULL);
-	if (kevent(_kq, &evSet, 1, NULL, 0, NULL) == -1) 
+	if (kevent(_kq, &evSet, 1, NULL, 0, NULL) == -1)
 		throw ServerException(("failed kevent start"));
 }
 
@@ -67,7 +67,7 @@ void Server::runServer()
 	{
 	//	std::cout << "WHILE LOOP ------------------------------" << loop1 << std::endl;
 		int nr_events = kevent(_kq, NULL, 0, evList, MAX_EVENTS, NULL);
-		std::cout << "runServer errno " << errno << "\n";
+	//	std::cout << "runServer errno " << errno << "\n";
 	//	std::cout << "NR EVENTS: " << nr_events << std::endl;
 
 		if (nr_events < 1)
@@ -76,7 +76,7 @@ void Server::runServer()
 		{
 			for (i = 0; i < nr_events; i++)
 			{
-				std::cout << "filter: " << evList[i].filter << std::endl; // test line 
+				// std::cout << "filter: " << evList[i].filter << std::endl; // test line 
 
 				if (evList[i].flags & EV_ERROR)
 					std::cout << "Event error\n";
@@ -198,10 +198,10 @@ void Server::sendResponse(struct kevent& event)
 
 		if (temp.find(".png") != std::string::npos)
 			//sendImmage(event, "images/img_99kb.jpg");		// ok sent
-			 sendImmage(event, "images/img_109kb.jpg");	// ok sent
+			// sendImmage(event, "images/img_109kb.jpg");	// ok sent
 			//sendImmage(event, "images/img_938kb.jpg");	// ok sent
 			//  sendImmage(event, "images/img_5000kb.jpg");	// no
-			//  sendImmage(event, "images/img_13000kb.jpg");// no
+			  sendImmage(event, "images/img_13000kb.jpg");// no
 		else 
 			//sendResponseFile(event, "./html_files/index_just_text.html");
 			sendResponseFile(event, "./html_files/index_just_image.html");
@@ -390,12 +390,37 @@ void Server::sendImmage(struct kevent& event, std::string imgFileName)
 	buffer_2 = (char *)malloc(imageSize);
 	memcpy(buffer_2, buffer, imageSize);
 
-	
+	// HEADER BLOCK
 	ret = send(event.ident, headerBlock.c_str(), headerBlock.length(), 0);
 	std::cout << YEL "Image sent a, returned from send() image: " << ret << RES "\n";
-	ret = send(event.ident, reinterpret_cast <const char* >(buffer), imageSize, 0);
-	// ret = send(event.ident, buffer, imageSize, 0);
-	std::cout << YEL "Image sent b, returned from send() image: " << ret << RES "\n";
+
+
+		!!! finished here
+		// Seems that sending image in a loop is working. It needs to stop exactly when all bytes 
+		// have been sent. 
+		// Sometimes it still does not come the whole image !!!
+		// Can I keep calling send() in case it keeps returning npos? ??
+
+	// for (unsigned long newImgSize = imageSize; newImgSize > 0; newImgSize = newImgSize - ret) {
+		//size_t newImgSize = imageSize;
+		ret = 0;
+		size_t byteInImage = 0;
+	for (unsigned long i = 0; i < 300; i++) {
+
+		// ret = send(event.ident, reinterpret_cast <const char* >(buffer), imageSize, 0);
+		ret = send(event.ident, reinterpret_cast <const char* >(&buffer[byteInImage]), 40000, 0);
+		//sleep(1);
+		if (ret != std::string::npos)
+			byteInImage = byteInImage + ret;							//4.992.867
+		std::cout << YEL "i" << i << "  b) Image sent " << ret << " bytes, all: " << byteInImage << RES "\n";
+		if (ret <= 0)
+			break ;
+	}
+
+
+
+
+
 
 	//ret = send(event.ident, content.c_str(), content.size(), 0);
 	//std::cout << YEL "Image sent c (claude), returned from send() image: " << ret << RES "\n";
