@@ -203,8 +203,8 @@ void Server::sendResponse(struct kevent& event)
 			//  sendImmage(event, "images/img_5000kb.jpg");	// no
 			  sendImmage(event, "images/img_13000kb.jpg");// no
 		else 
-			//sendResponseFile(event, "./html_files/index_just_text.html");
-			sendResponseFile(event, "./html_files/index_just_image.html");
+			sendResponseFile(event, "./html_files/index_just_text.html");
+			// sendResponseFile(event, "./html_files/index_just_image.html");
 			// sendResponseFile(event, "index_post_form.html");
 			// sendResponseFile(event, "index_get_form.html");
 			// sendResponseFile(event, "index_dummy.html");
@@ -395,7 +395,7 @@ void Server::sendImmage(struct kevent& event, std::string imgFileName)
 	std::cout << YEL "Image sent a, returned from send() image: " << ret << RES "\n";
 
 
-		!!! finished here
+		//!!! finished here
 		// Seems that sending image in a loop is working. It needs to stop exactly when all bytes 
 		// have been sent. 
 		// Sometimes it still does not come the whole image !!!

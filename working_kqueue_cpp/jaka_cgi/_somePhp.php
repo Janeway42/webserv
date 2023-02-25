@@ -15,7 +15,9 @@ echo "Start of PhP File\n";
  echo $surname;
  $name = test_input($_POST["surname"]);  # test input value for malicuous code
  
-
+ echo "COMSPEC:  ["; 
+ echo $COMSPEC;
+ echo "]\n";
 
 echo "PWD:  ["; 
 echo $_ENV["PWD"];
@@ -25,22 +27,35 @@ echo "HOME:  [";
 echo $_ENV["HOME"];
 echo "]\n";
 
-// Coming from **array from the 3rd argument
-echo "CITY: ["; 
-echo $_ENV["CITY"];
-echo "]\n";
+// // Coming from **array from the 3rd argument
+// echo "CITY: ["; 
+// echo $_ENV["CITY"];
+// echo "]\n";
 
-echo "STREET: [";
-echo $_ENV["STREET"];
-echo "]\n";
+// echo "STREET: [";
+// echo $_ENV["STREET"];
+// echo "]\n";
 
 echo "SERVER, HOME: [";
 echo $_SERVER["HOME"];
 echo "]\n";
 
-echo "SERVER, CITY: [";
-echo $_SERVER["CITY"];
+echo "ABC [";
+echo $_SERVER["ABC"];
 echo "]\n";
+
+echo "ABC [";
+echo getenv("ABC");
+echo "]\n";
+
+echo "HOME [";
+echo getenv("HOME");
+echo "]\n";
+
+
+// echo "SERVER, CITY: [";
+// echo $_SERVER["CITY"];
+// echo "]\n";
 
 
 

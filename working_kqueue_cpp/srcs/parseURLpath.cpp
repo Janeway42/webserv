@@ -14,23 +14,14 @@
 namespace data {
 
 
-void runExecve(char *ENV[], char *arr[], int fdClient) {
+void runExecve(char *ENV[], char *args[], int fdClient) {
 	std::cout << BLU "START runExeve\n" RES;
-	(void)fdClient;
+	
+	//std::cout << "ENV: " << ENV[0] << "\n";
 
 	int    		fd[2];
 	pid_t		retFork;
 	std::string	incomingStr;
-
-//	IT MAYBE NEEDS ALSO:
-//	To make fd nonblocking
-//		fcntl(_listening_socket, F_SETFL, O_NONBLOCK);
-//	Maybe with a new fd, a new event (struct) must be populated, something like this:
-//		newClient(evList[i]);
-//		EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, storage); 
-//		EV_SET(&evSet, fd, EVFILT_WRITE, EV_ADD, 0, 0, storage); 
-
-
 
 	if (pipe(fd) == -1)
 		std::cout << "Error: Pipe failed\n";
@@ -42,46 +33,61 @@ void runExecve(char *ENV[], char *arr[], int fdClient) {
 
 	if (retFork == 0) {
 		std::cout << "    Start CHILD\n";
-		//sleep(1);
 		if (retFork < 0)
 			std::cout << "Error: Fork failed\n";
-		std::cout << "    a)\n";
-		
 
-	//	dup2(fd[1], 1);
-		// dup2(fdClient, fd[1]);
-		std::cout << "    b)" << errno << "\n";
 
-	//	close(fd[0]);
+		dup2(fd[1], 1);
+		(void)fdClient;
+		//dup2(fdClient, fd[1]);
 
-		(void)ENV;
-		(void)arr;
+		close(fd[0]);
+
+		//(void)ENV;
+		//(void)arr;
 		// LS -LA WORKING
 		// char *arr[3] = {(char*)"/bin/ls", (char*)"-la", NULL};
 		// int ret = execve(arr[0], arr, NULL);
 		// std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
 
+
+		
+		// char * const arr2[2] = {(char*)"ABC", NULL};
+		// setenv("ABC", "somePWD", 0);
+		// setenv(ENV[0], "FIRST VARIABLE IN ENV", 0);
+		// std::cout << "      value of ENV[0] [" << ENV[0] << "]\n";
+		// std::cout << "      value of ABC [" << getenv("ABC") << "]\n";
+		// arr2[0] = (char*)"somePWD";
+
+		//setenv("COMSPEC", "somevalue", 0);
+		//std::cout << "     getenv COMPSPEC" << getenv("COMSPEC") << "\n";
+
+
+
 		// MY COMMAND 
-		//char *arr[3] = {(char*)"/bin/ls", (char*)"-la", NULL};
-		int ret = execve(arr[0], arr, NULL);
+		//int ret = execve(args[0], args, NULL);
+		int ret = execve(args[0], args, ENV);
 		std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
 	}
 	else {
+		wait(NULL);
 		//sleep(2);
-	//	close(fd[1]);
-		//char buff[100];
-		//std::cout << "    x)\n";
-	//	dup2(fd[0], 0);
-		// dup2(fdClient, fd[0]);
+		std::cout << "    Start Parent\n";
+		close(fd[1]);
+		char buff[100];
 
-		// for (int ret = 1; ret != 0; ) {
-		// 	memset(buff, '\0', 100);
-		// 	ret = read(fd[0], buff, 99);
-		// 	//std::cout << "Returned buffer, ret " << ret << "\n";
-		// 	incomingStr.append(buff);
-		// }
-		//std::cout << "\nIncoming [" << incomingStr << "]\n";
+		dup2(fd[0], 0);
+		//dup2(fdClient, fd[0]);
+
+		std::cout << RED "        Start loop reading from child\n" RES;
+		for (int ret = 1; ret != 0; ) {
+			memset(buff, '\0', 100);
+			ret = read(fd[0], buff, 99);
+			incomingStr.append(buff);
+		}
+		std::cout << BLU "\n       All content read from CGI\n[" << incomingStr << "]\n" RES;
 	}
+
 }
 
 
@@ -91,18 +97,51 @@ void runExecve(char *ENV[], char *arr[], int fdClient) {
 void Request::callCGI(RequestData reqData, int fdClient) {
 	std::cout << RED "START CALL_CGI\n" RES;
 
-	//char *vars[] = {(char*)"CITY=Amsterdam", (char*)"STREET=Singel"};
-	// const std::string ENV[ 24 ] = {
-	char* ENV[24] = {
-		(char*)"COMSPEC", (char*)"DOCUMENT_ROOT", (char*)"GATEWAY_INTERFACE", (char*)"HTTP_ACCEPT", (char*)"HTTP_ACCEPT_ENCODING",             
-		(char*)"HTTP_ACCEPT_LANGUAGE", (char*)"HTTP_CONNECTION", (char*)"HTTP_HOST", (char*)"HTTP_USER_AGENT", (char*)"PATH",            
-		(char*)"QUERY_STRING", (char*)"REMOTE_ADDR", (char*)"REMOTE_PORT", (char*)"REQUEST_METHOD", (char*)"REQUEST_URI", (char*)"SCRIPT_FILENAME",
-		(char*)"SCRIPT_NAME", (char*)"SERVER_ADDR", (char*)"SERVER_ADMIN", (char*)"SERVER_NAME",(char*)"SERVER_PORT",(char*)"SERVER_PROTOCOL",     
-		(char*)"SERVER_SIGNATURE", (char*)"SERVER_SOFTWARE"
+
+
+	//!!!
+	// Try to make a vector of all the string values, and then maybe convert it to the array of strings, to be passed to execve()
+	std::vector<std::string> allVariables;
+
+	std::string request_method = "REQUEST_METHOD=";
+	allVariables.push_back(request_method.append(reqData.getRequestMethod()));
+	std::string query_string = "QUERY_STRING=";
+	allVariables.push_back(query_string.append(reqData.getHttpPath()));
+
+		!!!
+	// Cleanup
+    for (int i = 0; i < allVariables.size(); i++) {
+        delete newAllVariables[i];
+    }
+    delete newAllVariables[];
+
+
+	// char **newAllVariables = new char*[allVariables.size()];
+	// for (int i = 0; i < allVariables.size(); i++) {
+    //     newAllVariables[i] = new char[allVariables[i].length() + 1];
+    //     strcpy(newAllVariables[i], allVariables[i].c_str());
+    // }
+    // for (int i = 0; i < allVariables.size(); i++) {
+    //     std::cout << newAllVariables[i] << std::endl;
+    // }
+
+
+
+
+
+
+	char *request_method2 = (char*)"REQUEST_METHOD=GET";
+	char* ENV[25] = {
+		(char*)"COMSPEC=", (char*)"DOCUMENT_ROOT=", (char*)"GATEWAY_INTERFACE=", (char*)"HTTP_ACCEPT=", (char*)"HTTP_ACCEPT_ENCODING=",             
+		(char*)"HTTP_ACCEPT_LANGUAGE=", (char*)"HTTP_CONNECTION=", (char*)"HTTP_HOST=", (char*)"HTTP_USER_AGENT=", (char*)"PATH=",            
+		(char*)"QUERY_STRING=", (char*)"REMOTE_ADDR=", (char*)"REMOTE_PORT=", request_method2, (char*)"REQUEST_URI=", (char*)"SCRIPT_FILENAME=",
+		(char*)"SCRIPT_NAME=", (char*)"SERVER_ADDR=", (char*)"SERVER_ADMIN=", (char*)"SERVER_NAME=",(char*)"SERVER_PORT=",(char*)"SERVER_PROTOCOL=",     
+		(char*)"SERVER_SIGNATURE=", (char*)"SERVER_SOFTWARE=", NULL
 	};
 
 
 	// Get formData, count all keys, and them to **ENV array
+	// Maybe storing keys is not needed, because the CGI should be recognizing all keys from the Query String ???
 	size_t nrKeys = 0;
 	std::map<std::string, std::string> formData = reqData.getFormData();
 	std::map<std::string, std::string>::iterator it;
@@ -143,19 +182,21 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 	// Prepare the array of the correct command/cgi file to be executed
 	// The path of the executable must be according to the 'action file' from the URL
-	// char *args[2];
-	// args[0] = (char *)"../jaka_cgi/helloNamex.cgi";   // Make sure the path is correct on Mac/Linux
-	// args[1] = NULL;
+	char *args[2];
+	args[0] = (char *)"./jaka_cgi/cpp_cgi";   // Make sure the path is correct on Mac/Linux
+	args[1] = NULL;
 
 
-	char *args[3];
-	args[0] = (char *)"/usr/bin/php";   // Make sure the path is correct on Mac/Linux
-	args[1] = (char *)"./jaka_cgi/_somePhp.php"; // MUST BE WITH A DOT !!
-	args[2] = NULL;
+	// char *args[3];
+	// args[0] = (char *)"/usr/bin/php";   // Make sure the path is correct on Mac/Linux
+	// args[1] = (char *)"./jaka_cgi/_somePhp.php"; // MUST BE WITH A DOT !!
+	// args[2] = NULL;
 
 	// (void)ENV;
 	// (void)fdClient;
 	runExecve(ENV, args, fdClient);
+
+
 
 	//int ret = execve(args[0], args, vars);
 	//printf("Execve failed: %d\n", ret);
@@ -377,6 +418,8 @@ int Request::parsePath(std::string str, int fdClient) {
 	checkIfFileExists(path);	// What in case of root only "/"  ???
 	checkTypeOfFile(path);
 
+
+	//(void)fdClient;
 	callCGI(getRequestData(), fdClient);
 
 
