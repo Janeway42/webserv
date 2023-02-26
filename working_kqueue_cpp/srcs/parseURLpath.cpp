@@ -6,12 +6,17 @@
 #include <vector>
 #include <unistd.h>
 
+// #include <sys/types.h>
+#include <sys/wait.h>	// for wait() on Linux
+
+
 
 // #include "_colors.h"
 #include "../includes/RequestParser.hpp"
 
 
 namespace data {
+
 
 
 void runExecve(char *ENV[], char *args[], int fdClient) {
@@ -108,24 +113,24 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 	std::string query_string = "QUERY_STRING=";
 	allVariables.push_back(query_string.append(reqData.getHttpPath()));
 
-		!!!
-	// Cleanup
-    for (int i = 0; i < allVariables.size(); i++) {
-        delete newAllVariables[i];
-    }
-    delete newAllVariables[];
+	std::cout << allVariables.size() << "\n";
 
 
 	// char **newAllVariables = new char*[allVariables.size()];
 	// for (int i = 0; i < allVariables.size(); i++) {
-    //     newAllVariables[i] = new char[allVariables[i].length() + 1];
-    //     strcpy(newAllVariables[i], allVariables[i].c_str());
-    // }
-    // for (int i = 0; i < allVariables.size(); i++) {
-    //     std::cout << newAllVariables[i] << std::endl;
-    // }
+	//     newAllVariables[i] = new char[allVariables[i].length() + 1];
+	//     strcpy(newAllVariables[i], allVariables[i].c_str());
+	// }
+	// for (int i = 0; i < allVariables.size(); i++) {
+	//     std::cout << newAllVariables[i] << std::endl;
+	// }
 
 
+	// Cleanup
+	// for (int i = 0; i < allVariables.size(); i++) {
+	//     delete newAllVariables[i];
+	// }
+	// delete newAllVariables[];
 
 
 
@@ -238,14 +243,14 @@ void printPathParts(std::string str, std::string strTrim, std::string path,
 
 
 int checkIfFileExists (const std::string& path) {
-    std::ifstream file(path.c_str());
+	std::ifstream file(path.c_str());
 
 	if (!(file.is_open())) {
 		std::cout << RED "File " << path << " not found\n" RES;
 		return (-1);
 	}
 	std::cout << GRN "File " << path << " exists\n" RES;
-    return 0;
+	return 0;
 }
 
 
@@ -311,7 +316,7 @@ std::map<std::string, std::string> Request::storeFormData(std::string &pathForm)
 	std::string					line;
 	std::vector<std::string>	formList;
 
-    std::stringstream iss(pathForm);
+	std::stringstream iss(pathForm);
 	while (std::getline(iss, line, '&'))
 		formList.push_back(line);
 
@@ -380,6 +385,7 @@ void	Request::storePathParts_and_FormData(std::string path) {
 }
 
 
+
 int Request::parsePath(std::string str, int fdClient) {
 	// maybe also trim white spaces front and back
 //	Request		req;
@@ -387,6 +393,7 @@ int Request::parsePath(std::string str, int fdClient) {
 	size_t		ret				= 0;
 	std::string pathLastWord	= "";
 	
+
 	if (path == "")
 		return (-1);
 	else if (path == "/") {
@@ -428,18 +435,25 @@ int Request::parsePath(std::string str, int fdClient) {
 	//std::cout << RED "Last word " << _data.getPathLastWord() << RES "\n";
 	return (0);
 }
-} // namespace data
 
 
 /*
 localhost:8080/folder//////folder/something.html?city=Tokio&street=Singel
 */
 
+} // namespace data
 
 
-int mainXXX()
-// int main()
+
+#include <iostream>
+#include <string>
+int mainXXXXX()
 {
+
+
+
+
+	//Request request;
 	// parsePath("/");
 	// parsePath("/home/");						// must be folder
 	// parsePath("/home");							// check if folder or file
@@ -458,16 +472,17 @@ int mainXXX()
 	// parsePath("/home/folder/response.php");		// check if folder or file
 	// parsePath("/home/folder/response.php?street=Singel&city=London");
 
-	// parsePath("kostja.se////folder//folder/folder/folder///folder/folder//index.html?city=tokio&street=singel");
+	//request.parsePath("kostja.se////folder//folder/folder/folder///folder/folder//index.html?city=tokio&street=singel", 33);
 	
 	
 
-	std::cout << data::checkIfFileExists("test.html") << "\n";
-	std::cout << data::checkIfFileExists("_testFolder") << "\n";
+	//std::cout << data::checkIfFileExists("test.html") << "\n";
+	//std::cout << data::checkIfFileExists("_testFolder") << "\n";
 	
 	
 	return (0);
 }
+
 
 
 

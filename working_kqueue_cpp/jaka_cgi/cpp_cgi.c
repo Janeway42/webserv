@@ -1,4 +1,3 @@
-#include <iostream>
 #include <stdlib.h>
 
 
@@ -7,14 +6,9 @@
 int main() {
   
   //list of possible environment variables
-  const char* env_vars[5] = {"HOME", "PATH", "LOGNAME", "SERVER_NAME", "ABC"};
+  const char* env_vars[3] = {"HOME", "PATH", "LOGNAME"};
   
-
-	// setenv("SERVER_NAME", "MyServy", 0);
-	// setenv("ABC", "abc", 0);
-
-
-  for (int i = 0; i < 5; i++)
+  for (int i = 0; i < 3; i++)
   {
     //Get the current path form the env variable $PATH
     const char* content = getenv(env_vars[i]); 
