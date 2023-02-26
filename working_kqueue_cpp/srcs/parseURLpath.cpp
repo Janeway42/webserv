@@ -9,19 +9,13 @@
 // #include <sys/types.h>
 #include <sys/wait.h>	// for wait() on Linux
 
-
-
-// #include "_colors.h"
 #include "../includes/RequestParser.hpp"
 
 
 namespace data {
 
-
-
 void runExecve(char *ENV[], char *args[], int fdClient) {
 	std::cout << BLU "START runExeve\n" RES;
-	
 	//std::cout << "ENV: " << ENV[0] << "\n";
 
 	int    		fd[2];
@@ -41,42 +35,16 @@ void runExecve(char *ENV[], char *args[], int fdClient) {
 		if (retFork < 0)
 			std::cout << "Error: Fork failed\n";
 
-
 		dup2(fd[1], 1);
 		(void)fdClient;
 		//dup2(fdClient, fd[1]);
-
 		close(fd[0]);
 
-		//(void)ENV;
-		//(void)arr;
-		// LS -LA WORKING
-		// char *arr[3] = {(char*)"/bin/ls", (char*)"-la", NULL};
-		// int ret = execve(arr[0], arr, NULL);
-		// std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
-
-
-		
-		// char * const arr2[2] = {(char*)"ABC", NULL};
-		// setenv("ABC", "somePWD", 0);
-		// setenv(ENV[0], "FIRST VARIABLE IN ENV", 0);
-		// std::cout << "      value of ENV[0] [" << ENV[0] << "]\n";
-		// std::cout << "      value of ABC [" << getenv("ABC") << "]\n";
-		// arr2[0] = (char*)"somePWD";
-
-		//setenv("COMSPEC", "somevalue", 0);
-		//std::cout << "     getenv COMPSPEC" << getenv("COMSPEC") << "\n";
-
-
-
-		// MY COMMAND 
-		//int ret = execve(args[0], args, NULL);
 		int ret = execve(args[0], args, ENV);
 		std::cout << RED "Error: Execve failed: " << ret << "\n" RES;
 	}
 	else {
 		wait(NULL);
-		//sleep(2);
 		std::cout << "    Start Parent\n";
 		close(fd[1]);
 		char buff[100];
@@ -98,91 +66,47 @@ void runExecve(char *ENV[], char *args[], int fdClient) {
 
 
 
-
 void Request::callCGI(RequestData reqData, int fdClient) {
 	std::cout << RED "START CALL_CGI\n" RES;
 
+	// Declare all necessary variables
+	std::string comspec			= "COMSPEC=";
+	std::string request_method	= "REQUEST_METHOD=";
+	std::string query_string	= "QUERY_STRING=";
+	std::string server_name		= "SERVER_NAME=";
 
 
-	//!!!
-	// Try to make a vector of all the string values, and then maybe convert it to the array of strings, to be passed to execve()
-	std::vector<std::string> allVariables;
+	// Declare a vector and fill it with variables, with attached =values
+	std::vector<std::string> temp;
+	temp.push_back(comspec.append("someComspec"));
+	temp.push_back(request_method.append("POST"));
+	temp.push_back(query_string.append("SomeStringHTTPURL"));
+	temp.push_back(query_string.append("MyServy"));
 
-	std::string request_method = "REQUEST_METHOD=";
-	allVariables.push_back(request_method.append(reqData.getRequestMethod()));
-	std::string query_string = "QUERY_STRING=";
-	allVariables.push_back(query_string.append(reqData.getHttpPath()));
+	std::cout << "Size of vector temp: "<< temp.size() << "\n";
 
-	std::cout << allVariables.size() << "\n";
+	// Make a char** array and copy all content of the aboce vector
+	char **env = new char*[temp.size()  + 1];
 
-
-	// char **newAllVariables = new char*[allVariables.size()];
-	// for (int i = 0; i < allVariables.size(); i++) {
-	//     newAllVariables[i] = new char[allVariables[i].length() + 1];
-	//     strcpy(newAllVariables[i], allVariables[i].c_str());
-	// }
-	// for (int i = 0; i < allVariables.size(); i++) {
-	//     std::cout << newAllVariables[i] << std::endl;
-	// }
-
-
-	// Cleanup
-	// for (int i = 0; i < allVariables.size(); i++) {
-	//     delete newAllVariables[i];
-	// }
-	// delete newAllVariables[];
+	size_t i = 0;
+	for (i = 0; i < temp.size(); i++) {
+	    env[i] = new char[temp[i].length() + 1];
+	    strcpy(env[i], temp[i].c_str());
+	}
+	env[i] = NULL;
+	for (i = 0; env[i]; i++) {
+	    std::cout << env[i] << std::endl;
+	}
 
 
-
-
-	char *request_method2 = (char*)"REQUEST_METHOD=GET";
-	char* ENV[25] = {
-		(char*)"COMSPEC=", (char*)"DOCUMENT_ROOT=", (char*)"GATEWAY_INTERFACE=", (char*)"HTTP_ACCEPT=", (char*)"HTTP_ACCEPT_ENCODING=",             
-		(char*)"HTTP_ACCEPT_LANGUAGE=", (char*)"HTTP_CONNECTION=", (char*)"HTTP_HOST=", (char*)"HTTP_USER_AGENT=", (char*)"PATH=",            
-		(char*)"QUERY_STRING=", (char*)"REMOTE_ADDR=", (char*)"REMOTE_PORT=", request_method2, (char*)"REQUEST_URI=", (char*)"SCRIPT_FILENAME=",
-		(char*)"SCRIPT_NAME=", (char*)"SERVER_ADDR=", (char*)"SERVER_ADMIN=", (char*)"SERVER_NAME=",(char*)"SERVER_PORT=",(char*)"SERVER_PROTOCOL=",     
-		(char*)"SERVER_SIGNATURE=", (char*)"SERVER_SOFTWARE=", NULL
-	};
-
-
-	// Get formData, count all keys, and them to **ENV array
-	// Maybe storing keys is not needed, because the CGI should be recognizing all keys from the Query String ???
-	size_t nrKeys = 0;
-	std::map<std::string, std::string> formData = reqData.getFormData();
-	std::map<std::string, std::string>::iterator it;
-	for (it = formData.begin(); it != formData.end(); it++, nrKeys++)
-	//{ std::cout << "NrKeys " << nrKeys << "\n"; }
-
-
-	// Make new 2D array with all envs AND query keys
-	// size_t i = 0;
-	// std::string arr[24 + nrKeys];
-	// const char *arr[3 + nrKeys];
-	// for (i = 0; i < 3; i++) {
-	// 	arr[i] = ENV[i];
-	// }
-
-
-	// Store query keys to the ENV array, after the mandatory variables
-	// Give each key the submitted value from the formData Map
-	//		THIS SHOULD BE DONE INSIDE CGI SCRIPT - RECOGNIZING THE QUERY KEY PAIRS
-	// for (it = formData.begin(); it != formData.end(); it++, i++) {
-	// 	arr[i] = (it->first).c_str();
-	// 	setenv((arr[i]).c_str(), (it->second).c_str(), 0);
-	// }
-
-	// Set the mandatory variables (not sure if necessary)
-	setenv("SERVER_NAME", "Servy", 0);
-	setenv("QUERY_STRING", reqData.getHttpPath().c_str(), 0); // IT MUST BE THE CORRECT QUERY STRING
-
-
-
-	// Just print out the whole ENV array
-	// for (i = 0; i < 24 + nrKeys; i++) {
-	// 	std::cout << MAG << i << "  FormList [" << arr[i] << "]\n" RES;
-	// }
-	//std::cout << "getenv SERVERNAME: " << getenv("SERVER_NAME") << "\n";
-	//std::cout << "getenv street: " << getenv("street") << "\n";
+	// char *request_method2 = (char*)"REQUEST_METHOD=GET";
+	// char* ENV[25] = {
+	// 	(char*)"COMSPEC=", (char*)"DOCUMENT_ROOT=", (char*)"GATEWAY_INTERFACE=", (char*)"HTTP_ACCEPT=", (char*)"HTTP_ACCEPT_ENCODING=",             
+	// 	(char*)"HTTP_ACCEPT_LANGUAGE=", (char*)"HTTP_CONNECTION=", (char*)"HTTP_HOST=", (char*)"HTTP_USER_AGENT=", (char*)"PATH=",            
+	// 	(char*)"QUERY_STRING=", (char*)"REMOTE_ADDR=", (char*)"REMOTE_PORT=", request_method2, (char*)"REQUEST_URI=", (char*)"SCRIPT_FILENAME=",
+	// 	(char*)"SCRIPT_NAME=", (char*)"SERVER_ADDR=", (char*)"SERVER_ADMIN=", (char*)"SERVER_NAME=",(char*)"SERVER_PORT=",(char*)"SERVER_PROTOCOL=",     
+	// 	(char*)"SERVER_SIGNATURE=", (char*)"SERVER_SOFTWARE=", NULL
+	// };
 
 
 	// Prepare the array of the correct command/cgi file to be executed
@@ -199,12 +123,13 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 	// (void)ENV;
 	// (void)fdClient;
-	runExecve(ENV, args, fdClient);
+	runExecve(env, args, fdClient);
 
-
-
-	//int ret = execve(args[0], args, vars);
-	//printf("Execve failed: %d\n", ret);
+	// Cleanup
+	for (size_t i = 0; i < temp.size(); i++) {
+	    delete env[i];
+	}
+	delete env;
 }
 
 
