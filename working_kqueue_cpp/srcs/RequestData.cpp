@@ -19,6 +19,8 @@ RequestData::RequestData() {
 	
 	_pathFirstPart		= "default";
 	_pathLastWord		= "default";
+	_queryString		= "default";
+	_cgiBody			= "default";
 //	_formList			= NULL;	// ???
 //	_formData			= NULL;	// ???
 }
@@ -63,19 +65,24 @@ const std::string RequestData::getRequestContentType() const {
 }
 
 
-// PATH PARTS AND FORM DATA
+// PATH PARTS AND QUERY_STRING (FORM DATA)
+const std::string RequestData::getQueryString() const {
+	return _queryString;
+}
 const std::string RequestData::getPathFirstPart() const {
 	return _pathFirstPart;
 }
 const std::string RequestData::getPathLastWord() const {
 	return _pathLastWord;
 }
+const std::string RequestData::getCgiBody() const {
+	return _cgiBody;
+}
 std::map<std::string, std::string> RequestData::getFormData() const {	// Cannot return const
 	return _formData;													// because iterator won't work
 }
-
 std::vector<std::string> RequestData::getFormList() const {	// Cannot return const
-	return _formList;													// because iterator won't work
+	return _formList;										// because iterator won't work
 }
 
 
@@ -120,17 +127,22 @@ void RequestData::setRequestContentType(std::string reqContentType)
 
 
 
-// PATH PARTS AND FORM DATA
+// PATH PARTS AND QUERY_STRING (FORM DATA)
+void RequestData::setQueryString(std::string queryString) {
+	_queryString = queryString;
+}
 void RequestData::setPathFirstPart(std::string pathFirstPart) {
 	_pathFirstPart = pathFirstPart;
 }
 void RequestData::setPathLastWord(std::string pathLastWord) {
 	_pathLastWord = pathLastWord;
 }
+void RequestData::setCgiBody(std::string cgiBody) {
+	_cgiBody = cgiBody;
+}
 void RequestData::setFormData(std::map<std::string, std::string> formData) {
 	_formData = formData;
 }
-
 void RequestData::setFormList(std::vector<std::string> formList) {
 	_formList = formList;
 }

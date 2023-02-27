@@ -1,8 +1,3 @@
-//
-// Created by Joyce Macksuele on 1/22/23.
-// Adapted by JAKA
-//
-
 #ifndef WEBSERV_REQUESTDATA_HPP
 #define WEBSERV_REQUESTDATA_HPP
 
@@ -28,6 +23,8 @@ class RequestData {
 		// PARTS OF PATH AND FORM DATA
 		std::string _pathFirstPart;                      // ie: /kostja.se/folderA/folderB/
 		std::string _pathLastWord;                       // ie: /index.html  OR   /folderC/
+		std::string	_queryString;
+		std::string	_cgiBody;
 		std::map<std::string, std::string>	_formData;	 // maybe not needed, maybe Vector list will be enough
 		std::vector<std::string>			_formList;
 
@@ -51,10 +48,11 @@ class RequestData {
 
 		const std::string 							getPathFirstPart( )const;
 		const std::string							getPathLastWord() const;
+		const std::string							getQueryString() const;
+		const std::string							getCgiBody() const;
 
-		std::vector<std::string>					getFormList() const;
-		std::map<std::string, std::string>			getFormData() const;
-		// const std::map<std::string, std::string>	getFormData() const;
+		std::vector<std::string>					getFormList() const;	// maybe not needed
+		std::map<std::string, std::string>			getFormData() const;	// maybe not needed
 
 
 	/** Request Setters */
@@ -70,10 +68,12 @@ class RequestData {
 		void setRequestContentType(std::string reqAccept);
 
 		// Path parts and Form Data
+		void setQueryString(std::string path);
 		void setPathFirstPart(std::string path);
 		void setPathLastWord(std::string path);
-		void setFormList(std::vector<std::string>);
-		void setFormData(std::map<std::string, std::string>);
+		void setCgiBody(std::string cgiBody);
+		void setFormList(std::vector<std::string>);				// maybe not needed
+		void setFormData(std::map<std::string, std::string>);	// maybe not needed
 
 };
 

@@ -17,7 +17,7 @@ Server::Server()
 	hints.ai_family = PF_UNSPEC; 
 	hints.ai_flags = AI_PASSIVE; 
 	hints.ai_socktype = SOCK_STREAM;
-	if (getaddrinfo("127.0.0.1", "8080", &hints, &_addr) != 0)
+	if (getaddrinfo("127.0.0.1", "8081", &hints, &_addr) != 0)
 		throw ServerException(("failed addr"));
 
 	_listening_socket = socket(_addr->ai_family, _addr->ai_socktype, _addr->ai_protocol);
@@ -191,22 +191,17 @@ void Server::sendResponse(struct kevent& event)
 		std::string temp = (storage->getRequestData()).getHttpPath();
 		std::cout << "Done: " << storage->getDone() << " Error: " << storage->getError() << std::endl;
 
-		// if the image is too big (more than 200kb), the return from send is random
-		//		and almost always lower than orig img size ...
-		// How to send a big file via send(), if it only allows 65kb max?
-		// How to send multiple sends(), if kqueue should only get one send() ???
-
 		if (temp.find(".png") != std::string::npos)
 			//sendImmage(event, "images/img_99kb.jpg");		// ok sent
 			// sendImmage(event, "images/img_109kb.jpg");	// ok sent
 			//sendImmage(event, "images/img_938kb.jpg");	// ok sent
 			//  sendImmage(event, "images/img_5000kb.jpg");	// no
-			  sendImmage(event, "images/img_13000kb.jpg");// no
+			sendImmage(event, "images/img_13000kb.jpg");// no
 		else 
-			sendResponseFile(event, "./html_files/index_just_text.html");
-			// sendResponseFile(event, "./html_files/index_just_image.html");
-			// sendResponseFile(event, "index_post_form.html");
-			// sendResponseFile(event, "index_get_form.html");
+			// sendResponseFile(event, "./html_files/index_just_text.html");
+			sendResponseFile(event, "./html_files/index_just_image.html");
+			// sendResponseFile(event, "./html_files/index_post_form.html");
+			// sendResponseFile(event, "./html_files/index_get_form.html");
 			// sendResponseFile(event, "index_dummy.html");
 
 		if (removeEvent(event, EVFILT_WRITE) == 1)
@@ -330,161 +325,50 @@ void Server::sendResponseFile(struct kevent& event, std::string file)
 
 
 
+// NEW SEND IMAGE
+void Server::sendImmage(struct kevent& event, std::string imgFileName) {
+	std::cout << RED "FOUND IMAGE extention .jpg or .png\n" RES;
+	unsigned long ret = 0;
 
-// NEW SEND IMAGE, ATTEMPT WITH MEMCPY
-void Server::sendImmage(struct kevent& event, std::string imgFileName)
-{
-	std::cout << RED "FOUND extention .jpg or .png\n" RES;
-
-	FILE *file;
-	char *buffer;
-	unsigned long imageSize;
-
-	file = fopen(imgFileName.c_str(), "rb");
-	if (!file)
-	{
-		std::cerr << "Unable to open file\n";
-		return ;
- 	}
-
-	fseek(file, 0L, SEEK_END);	// Get file length
-	imageSize = ftell(file);
-	fseek(file, 0L, SEEK_SET);
-
-	// NEW FROM CLAUDE
-	std::fstream file2;
+	// Stream image and store it into a string
+	std::fstream imageFile;
 	std::string content;
-	file2.open(imgFileName);
-	content.assign(std::istreambuf_iterator<char>(file2), std::istreambuf_iterator<char>());
-	file2.close();
+	imageFile.open(imgFileName);
+	content.assign(std::istreambuf_iterator<char>(imageFile), std::istreambuf_iterator<char>());
 	content += "\r\n";
-
-	// send(event.ident, content.c_str(), content.size(), 0);
-	//read(sock, buffer, 4095);
-	// END CLAUDE
-
-	//imageSize = 65000;
-
-	std::cout << YEL "ImageSize from fseek:   " << imageSize << RES "\n";
-	// 13482898
+	imageFile.close();
 
 	std::string headerBlock = 	"HTTP/1.1 200 OK\r\n"
 								"Content-Type: image/jpg\r\n";
 	headerBlock.append("accept-ranges: bytes\r\n");
 	std::string contentLen = "Content-Length: ";
-	std::string temp = std::to_string(imageSize);
+	std::string temp = std::to_string(content.size());
 	headerBlock.append(contentLen);
 	contentLen.append(temp);
 	headerBlock.append("\r\n\r\n");
 
-	buffer = (char *)malloc(imageSize);
-	if (!buffer)
-		{ fprintf(stderr, "Memory error!"); fclose(file); return ; }
-
-
-	unsigned long ret;
-	ret = fread(buffer, sizeof(char), imageSize, file);
-	std::cout << YEL "Returned fread:         " << ret << RES "\n";
-
-	char *buffer_2;
-	buffer_2 = (char *)malloc(imageSize);
-	memcpy(buffer_2, buffer, imageSize);
-
-	// HEADER BLOCK
+	// Send header block
 	ret = send(event.ident, headerBlock.c_str(), headerBlock.length(), 0);
-	std::cout << YEL "Image sent a, returned from send() image: " << ret << RES "\n";
+	//std::cout << YEL "Image header block sent, ret: " << ret << RES "\n";
 
-
-		//!!! finished here
-		// Seems that sending image in a loop is working. It needs to stop exactly when all bytes 
-		// have been sent. 
-		// Sometimes it still does not come the whole image !!!
-		// Can I keep calling send() in case it keeps returning npos? ??
-
-	// for (unsigned long newImgSize = imageSize; newImgSize > 0; newImgSize = newImgSize - ret) {
-		//size_t newImgSize = imageSize;
-		ret = 0;
-		size_t byteInImage = 0;
-	for (unsigned long i = 0; i < 300; i++) {
-
-		// ret = send(event.ident, reinterpret_cast <const char* >(buffer), imageSize, 0);
-		ret = send(event.ident, reinterpret_cast <const char* >(&buffer[byteInImage]), 40000, 0);
-		//sleep(1);
-		if (ret != std::string::npos)
-			byteInImage = byteInImage + ret;							//4.992.867
-		std::cout << YEL "i" << i << "  b) Image sent " << ret << " bytes, all: " << byteInImage << RES "\n";
-		if (ret <= 0)
-			break ;
+	// Send image content and each time reduce the original by ret
+	size_t sentSoFar = 0;
+	size_t imageSize = content.size();
+	for (int i = 0; sentSoFar < imageSize; i++) {
+		ret = send(event.ident, content.c_str(), content.size(), 0);
+		if (ret == std::string::npos) {
+			//std::cout << RED << i << "    Nothing sent (" << ret << RES "),  sentSoFar " << sentSoFar << "\n";
+			continue ;
+		}
+		else {
+			content.erase(0, ret);
+			sentSoFar += ret;
+			//std::cout << YEL << i << "    Sent chunk " << ret << RES ",  sentSoFar " << sentSoFar << "\n";
+		}
 	}
-
-
-
-
-
-
-	//ret = send(event.ident, content.c_str(), content.size(), 0);
-	//std::cout << YEL "Image sent c (claude), returned from send() image: " << ret << RES "\n";
-
-
-
-	fclose(file);
-	free(buffer);
-	free(buffer_2);
 }
 
 
-
-
-// ORIG
-// void Server::sendImmage(struct kevent& event, std::string imgFileName)
-// {
-// 	std::cout << RED "FOUND extention .jpg or .png\n" RES;
-
-// 	FILE *file;
-// 	unsigned char *buffer;
-// 	unsigned long imageSize;
-
-// 	file = fopen(imgFileName.c_str(), "rb");
-// 	if (!file)
-// 	{
-// 		std::cerr << "Unable to open file\n";
-// 		return ;
-//  	}
-
-// 	fseek(file, 0L, SEEK_END);	// Get file length
-// 	imageSize = ftell(file);
-// 	fseek(file, 0L, SEEK_SET);
-
-// 	//std::cout << YEL "ImageSize from fseek:   " << imageSize << RES "\n";
-// 	// 13482898
-
-
-// 	std::string temp = std::to_string(imageSize);
-// 	std::string contentLen = "Content-Length: ";
-// 	contentLen.append(temp);
-// 	contentLen.append("\r\n");
-
-// 	std::string headerBlock = 	"HTTP/1.1 200 OK\r\n"
-// 								"Content-Type: image/jpg\r\n";
-// 	headerBlock.append(contentLen);
-// 	headerBlock.append("accept-ranges: bytes");
-// 	headerBlock.append("\r\n\r\n");
-
-// 	buffer = (unsigned char *)malloc(imageSize);
-// 	if (!buffer)
-// 		{ fprintf(stderr, "Memory error!"); fclose(file); return ; }
-
-// 	int ret = fread(buffer, sizeof(unsigned char), imageSize, file);
-// 	std::cout << YEL "Returned fread:     " << ret << RES "\n";
-	
-// 	ret = send(event.ident, headerBlock.c_str(), headerBlock.length(), 0);
-// 	std::cout << YEL "Image sent a, returned from send() image: " << ret << RES "\n";
-
-// 	ret = send(event.ident, reinterpret_cast <const char* >(buffer), imageSize, 0);
-// 	std::cout << YEL "Image sent b, returned from send() image: " << ret << RES "\n";
-// 	fclose(file);
-// 	free(buffer);
-// }
 
 // --------------------------------------------------------- get functions
 // -----------------------------------------------------------------------

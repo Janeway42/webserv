@@ -14,7 +14,7 @@
 
 namespace data {
 
-void runExecve(char *ENV[], char *args[], int fdClient) {
+std::string runExecve(char *ENV[], char *args[], int fdClient) {
 	std::cout << BLU "START runExeve\n" RES;
 	//std::cout << "ENV: " << ENV[0] << "\n";
 
@@ -58,9 +58,9 @@ void runExecve(char *ENV[], char *args[], int fdClient) {
 			ret = read(fd[0], buff, 99);
 			incomingStr.append(buff);
 		}
-		std::cout << BLU "\n       All content read from CGI\n[" << incomingStr << "]\n" RES;
+		//std::cout << BLU "\n       All content read from CGI\n[" << incomingStr << "]\n" RES;
 	}
-
+	return (incomingStr);
 }
 
 
@@ -69,19 +69,19 @@ void runExecve(char *ENV[], char *args[], int fdClient) {
 void Request::callCGI(RequestData reqData, int fdClient) {
 	std::cout << RED "START CALL_CGI\n" RES;
 
+	(void)reqData;
 	// Declare all necessary variables
 	std::string comspec			= "COMSPEC=";
 	std::string request_method	= "REQUEST_METHOD=";
 	std::string query_string	= "QUERY_STRING=";
 	std::string server_name		= "SERVER_NAME=";
 
-
 	// Declare a vector and fill it with variables, with attached =values
 	std::vector<std::string> temp;
 	temp.push_back(comspec.append("someComspec"));
-	temp.push_back(request_method.append("POST"));
-	temp.push_back(query_string.append("SomeStringHTTPURL"));
-	temp.push_back(query_string.append("MyServy"));
+	temp.push_back(request_method.append(_data.getRequestMethod()));
+	temp.push_back(query_string.append(_data.getQueryString()));
+	temp.push_back(server_name.append("MyServy"));
 
 	std::cout << "Size of vector temp: "<< temp.size() << "\n";
 
@@ -94,10 +94,10 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 	    strcpy(env[i], temp[i].c_str());
 	}
 	env[i] = NULL;
+	// Just for printing
 	for (i = 0; env[i]; i++) {
-	    std::cout << env[i] << std::endl;
+	   ; // std::cout << env[i] << std::endl;
 	}
-
 
 	// char *request_method2 = (char*)"REQUEST_METHOD=GET";
 	// char* ENV[25] = {
@@ -111,9 +111,9 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 	// Prepare the array of the correct command/cgi file to be executed
 	// The path of the executable must be according to the 'action file' from the URL
-	char *args[2];
-	args[0] = (char *)"./jaka_cgi/cpp_cgi";   // Make sure the path is correct on Mac/Linux
-	args[1] = NULL;
+	// char *args[2];
+	// args[0] = (char *)"./jaka_cgi/cpp_cgi";   // Make sure the path is correct on Mac/Linux
+	// args[1] = NULL;
 
 
 	// char *args[3];
@@ -121,15 +121,22 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 	// args[1] = (char *)"./jaka_cgi/_somePhp.php"; // MUST BE WITH A DOT !!
 	// args[2] = NULL;
 
+	char *args[3];
+	args[0] = (char *)"/usr/bin/python";   // Make sure the path is correct on Mac/Linux
+	args[1] = (char *)"./jaka_cgi/python_cgi.py"; // MUST BE WITH A DOT !!
+	args[2] = NULL;
+
 	// (void)ENV;
 	// (void)fdClient;
-	runExecve(env, args, fdClient);
+	_data.setCgiBody(runExecve(env, args, fdClient));
+
+	std::cout << "Stored CGI Body: [\n" BLU << _data.getCgiBody() << RES "]\n";
 
 	// Cleanup
 	for (size_t i = 0; i < temp.size(); i++) {
 	    delete env[i];
 	}
-	delete env;
+	delete[] env;
 }
 
 
@@ -232,16 +239,17 @@ std::string removeDuplicateSlash(std::string pathOld) {
 
 /* 	Split string at '&' and store each line into vector<>
 	Then split each line in vector into map<> key:value */
-std::map<std::string, std::string> Request::storeFormData(std::string &pathForm)
+std::map<std::string, std::string> Request::storeFormData(std::string &queryString)
 {
-	//std::cout << GRN "Start store form data()\n" RES;
-	std::cout << GRN "   BODY:        [" << _body << "]\n" RES;
-	std::cout << GRN "   FORM PATH:   [" << pathForm << "]\n" RES;
+	std::cout << GRN "Start store form data()\n" RES;
+	std::cout << GRN "    BODY:        ["   << _body << "]\n" RES;
+	std::cout << GRN "    queryString:   [" <<  queryString << "]\n" RES;
+	std::cout << GRN "   _queryString:   [" << _data.getQueryString() << "]\n" RES;
 
 	std::string					line;
 	std::vector<std::string>	formList;
 
-	std::stringstream iss(pathForm);
+	std::stringstream iss(queryString);
 	while (std::getline(iss, line, '&'))
 		formList.push_back(line);
 
@@ -269,27 +277,24 @@ std::map<std::string, std::string> Request::storeFormData(std::string &pathForm)
 // void	Request::storePath_and_FolderName(std::string path, std::string pathFirstPart, std::string pathLastWord, RequestData reqData) {
 void	Request::storePath_and_FolderName(std::string path) {
 
-		int 	pos1	= 0;
-		int		pos2	= 0;
-		size_t 	count	= 0;
-		pos2 			= path.find_first_of("/");
+	int 	pos1	= 0;
+	int		pos2	= 0;
+	size_t 	count	= 0;
+	pos2 			= path.find_first_of("/");
 
-		while (count < path.length()) {
-			if ((count = path.find("/", count)) != std::string::npos) {
-				pos1 = pos2;
-				pos2 = count;
-			}
-			if ( count == std::string::npos )
-				break ;
-			count++;
+	while (count < path.length()) {
+		if ((count = path.find("/", count)) != std::string::npos) {
+			pos1 = pos2;
+			pos2 = count;
 		}
-	//	pathFirstPart	= path.substr(0, pos1 + 1);
-	//	pathLastWord	= path.substr(pos1 + 1, pos2);
-
-		_data.setPathFirstPart(path.substr(0, pos1 + 1));
-		_data.setPathLastWord(path.substr(pos1 + 1, pos2));
-	//	reqData.setPathLastWord(path.substr(pos1 + 1, pos2));
+		if ( count == std::string::npos )
+			break ;
+		count++;
+	}
+	_data.setPathFirstPart(path.substr(0, pos1 + 1));
+	_data.setPathLastWord(path.substr(pos1 + 1, pos2));
 }
+
 
 
 // Found GET Method with '?' Form Data
@@ -299,14 +304,22 @@ void	Request::storePathParts_and_FormData(std::string path) {
 	std::string tempStr		= path.substr(0, temp);
 	int posLastSlash 		= tempStr.find_last_of("/");
 	int	posFirstQuestMark	= path.find_first_of("?");
-	std::string	pathForm	= path.substr(temp, std::string::npos);
+	std::string	queryString	= path.substr(temp, std::string::npos);
 
 	_data.setPathFirstPart(tempStr.substr(0, posLastSlash));
 	_data.setPathLastWord(path.substr(posLastSlash, posFirstQuestMark - posLastSlash));
 
-	if (pathForm[0] == '?') 	// Skip the '?' in the path
-		pathForm = &pathForm[1];
-	storeFormData(pathForm);
+	if (queryString[0] == '?') 	// Skip the '?' in the path
+		queryString = &queryString[1];
+
+	if (_data.getRequestMethod() == "GET")
+		_data.setQueryString(queryString);
+
+	std::cout << "Stored GET _queryString [\n" << BLU << _data.getQueryString() << RES "]\n";
+	std::cout << "Stored GET _body [\n" << BLU << _body << RES "]\n" RES;
+	
+	storeFormData(queryString);	// maybe not needed (the whole vector and map)
+								// if the cgi script can handle the whole queryString
 }
 
 
@@ -351,8 +364,8 @@ int Request::parsePath(std::string str, int fdClient) {
 	checkTypeOfFile(path);
 
 
-	//(void)fdClient;
-	callCGI(getRequestData(), fdClient);
+	(void)fdClient;
+	//callCGI(getRequestData(), fdClient);
 
 
 

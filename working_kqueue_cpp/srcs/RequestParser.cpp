@@ -178,24 +178,14 @@ void    Request::appendToRequest(const char *str, int fdClient) {
 
 	//std::cout << PUR "AppendToRequest()\n" RES; // sleep(1);
 
-	//test error: 
-	// _errorRequest = true;  // --------------------------------------------------error test
-	// return ;
-
-	//test request takes too long: 
-	// sleep(3);
-
 	if (_headerDone == false) {
-		//std::cout << PUR "     _headerDone == FALSE\n" RES;
-		
 		_temp.append(chunk);
-		//std::cout << PUR "     chunk appended to _temp\n" RES;	// sleep(1);
 
 		if ((it = _temp.find(strToFind)) != std::string::npos) {
 			//std::cout << PUR "     a)  Found header ending /r/n, maybe there is body\n" RES;	// sleep(1);
 			_header.append(_temp.substr(0, it));
 			_headerDone = true;
-			std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
+			//std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
 			parseHeader(_header);
 
 			parsePath(_data.getHttpPath(), fdClient);	// INSERTED JAKA, can maybe be moved to parseHeader()
@@ -204,20 +194,15 @@ void    Request::appendToRequest(const char *str, int fdClient) {
 				_doneParsing = true;
 				return ;
 			}
-			appendLastChunkToBody(it + strToFind.length());
-			std::cout << "BODY:   [" BLU << _body   << RES "]\n\n";	// sleep(1);
+			appendLastChunkToBody(it + strToFind.length(), fdClient);
+			//std::cout << "apr() BODY:   [" BLU << _body   << RES "]\n\n";	// sleep(1);
 		}
-
-		// else if ((it = _temp.find(strToFind)) == std::string::npos ) { // Keep appending, till /r/n id found
-		// 	// std::cout << PUR "     b)  Found header ending, no body\n" RES;
-		// 	std::cout << PUR "     b)  Not found /r/n yet. Append _temp_ to _header." RES;
-		// 	std::cout << PUR " (it: " << it << ")\n" RES;	// sleep(1);
-		// 	std::cout << "     _temp: [" BLU << _temp << RES "]\n";	// sleep(1);
-		// }
 	}
 	else if (_headerDone == true) {
-			std::cout << PUR "     _headerDone == TRUE\n" RES;	// sleep(1);
-			appendToBody(chunk);
+		//std::cout << PUR "     _headerDone == TRUE\n" RES;	// sleep(1);
+		appendToBody(chunk);
+		if (_doneParsing == true && _data.getRequestMethod() == "POST")
+			callCGI(getRequestData(), fdClient);
 	}
 	//std::cout << PUR "End of AppendToRequest()\n" RES; // sleep(1);
 }
@@ -226,7 +211,7 @@ void    Request::appendToRequest(const char *str, int fdClient) {
 
 
 // Last chunk means, last chunk of header section, so first chunk of body
-int Request::appendLastChunkToBody(std::string::size_type it) {
+int Request::appendLastChunkToBody(std::string::size_type it, int fdClient) {
 	_body = _temp.substr(it);
 	
 	// Compare body lenght
@@ -244,6 +229,8 @@ int Request::appendLastChunkToBody(std::string::size_type it) {
 		}
 		std::cout << GRE "OK: Body-Length is as expected Content-Length\n" RES;
 		_doneParsing = true;
+		if (_doneParsing == true && _data.getRequestMethod() == "POST")
+			callCGI(getRequestData(), fdClient);
 		return (0);
 	}
 	// Timeout ???
@@ -269,10 +256,14 @@ int Request::appendToBody(std::string req) {
 		std::cout << GRE "OK: Done parsing.\n" RES; // sleep(2);
 
 		if (_data.getRequestMethod() == "POST")
-			storeFormData(_body);
-
+		{
+			std::cout << GRE "      ....    store _body into _queryString\n" RES; // sleep(2);
+			_data.setQueryString(_body);
+			storeFormData(_body);	// maybe not needed
+			// Here call CGI
+		}
 		_doneParsing = true;
-		std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
+		//std::cout << "HEADER: [" BLU << _header << RES "]\n";	// sleep(1);
 		std::cout << "BODY:   [" BLU << _body   << RES "]\n\n";	// sleep(1);
 		return (0);
 	}
@@ -286,21 +277,23 @@ int Request::appendToBody(std::string req) {
 }
 
 
-int Request::checkStoredVars() {
-	if (_data.getRequestContentLength() == _body.length()) {
-		// if (_body.length() == 0 && _data.getRequestContentLength() == 0) {		// Compare body lenght
-		// 	std::cout << GRE "OK (there is no body)\n" RES;
-		// 	_doneParsing = true;
-		// 	return (0);
-		// }
-		std::cout << GRE "OK: Body size == Content lenght\n" RES;
-	}
-	if (_data.getRequestContentLength() > _body.length()) {
-		std::cout << RED "Error: Body length is smaller than expected Content-Length\n" RES;
-		return (1);
-	}
-	return (0);
-}
+// // Maybe not needed
+// int Request::checkStoredVars() {
+// 	if (_data.getRequestContentLength() == _body.length()) {
+// 		// if (_body.length() == 0 && _data.getRequestContentLength() == 0) {		// Compare body lenght
+// 		// 	std::cout << GRE "OK (there is no body)\n" RES;
+// 		// 	_doneParsing = true;
+// 		// 	return (0);
+// 		// }
+// 		_data.setQueryString(_body);
+// 		std::cout << GRE "OK: Body size == Content lenght\n" RES;
+// 	}
+// 	if (_data.getRequestContentLength() > _body.length()) {
+// 		std::cout << RED "Error: Body length is smaller than expected Content-Length\n" RES;
+// 		return (1);
+// 	}
+// 	return (0);
+// }
 
 
 

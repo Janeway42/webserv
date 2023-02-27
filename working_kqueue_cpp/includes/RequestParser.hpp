@@ -40,7 +40,7 @@ namespace data {
 			std::string _body;
 			std::string _temp;
         	std::string keyParser(std::string & lineContent, std::string keyToFind);
-			int 		appendLastChunkToBody(std::string::size_type it);
+			int 		appendLastChunkToBody(std::string::size_type it, int fdClient);
 			int 		appendToBody(std::string request);
 
 			bool		_headerDone;
@@ -70,7 +70,7 @@ namespace data {
 			
 
 
-			int     checkStoredVars();
+		//	int     checkStoredVars();
 			void    printStoredRequestData(data::Request &request); // Just for checking
 
 			int     storeWordsFromFirstLine(std::string firstLine);
