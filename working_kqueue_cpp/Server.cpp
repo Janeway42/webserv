@@ -17,7 +17,7 @@ Server::Server()
 	hints.ai_family = PF_UNSPEC; 
 	hints.ai_flags = AI_PASSIVE; 
 	hints.ai_socktype = SOCK_STREAM;
-	if (getaddrinfo("127.0.0.1", "8081", &hints, &_addr) != 0)
+	if (getaddrinfo("127.0.0.1", "8080", &hints, &_addr) != 0)
 		throw ServerException(("failed addr"));
 
 	_listening_socket = socket(_addr->ai_family, _addr->ai_socktype, _addr->ai_protocol);
@@ -199,8 +199,8 @@ void Server::sendResponse(struct kevent& event)
 			sendImmage(event, "images/img_13000kb.jpg");// no
 		else 
 			// sendResponseFile(event, "./html_files/index_just_text.html");
-			sendResponseFile(event, "./html_files/index_just_image.html");
-			// sendResponseFile(event, "./html_files/index_post_form.html");
+			// sendResponseFile(event, "./html_files/index_just_image.html");
+			 sendResponseFile(event, "./html_files/index_post_form.html");
 			// sendResponseFile(event, "./html_files/index_get_form.html");
 			// sendResponseFile(event, "index_dummy.html");
 

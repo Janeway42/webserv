@@ -11,6 +11,15 @@
 
 #include "../includes/RequestParser.hpp"
 
+/*
+char* ENV[25] = {
+	(char*)"COMSPEC=", (char*)"DOCUMENT_ROOT=", (char*)"GATEWAY_INTERFACE=", (char*)"HTTP_ACCEPT=", (char*)"HTTP_ACCEPT_ENCODING=",             
+	(char*)"HTTP_ACCEPT_LANGUAGE=", (char*)"HTTP_CONNECTION=", (char*)"HTTP_HOST=", (char*)"HTTP_USER_AGENT=", (char*)"PATH=",            
+	(char*)"QUERY_STRING=", (char*)"REMOTE_ADDR=", (char*)"REMOTE_PORT=", request_method2, (char*)"REQUEST_URI=", (char*)"SCRIPT_FILENAME=",
+	(char*)"SCRIPT_NAME=", (char*)"SERVER_ADDR=", (char*)"SERVER_ADMIN=", (char*)"SERVER_NAME=",(char*)"SERVER_PORT=",(char*)"SERVER_PROTOCOL=",     
+	(char*)"SERVER_SIGNATURE=", (char*)"SERVER_SOFTWARE=", NULL
+};
+*/
 
 namespace data {
 
@@ -78,12 +87,12 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 	// Declare a vector and fill it with variables, with attached =values
 	std::vector<std::string> temp;
-	temp.push_back(comspec.append("someComspec"));
+	temp.push_back(comspec.append("default"));
 	temp.push_back(request_method.append(_data.getRequestMethod()));
 	temp.push_back(query_string.append(_data.getQueryString()));
-	temp.push_back(server_name.append("MyServy"));
+	temp.push_back(server_name.append("default"));
 
-	std::cout << "Size of vector temp: "<< temp.size() << "\n";
+	//std::cout << "Size of vector temp: "<< temp.size() << "\n";
 
 	// Make a char** array and copy all content of the aboce vector
 	char **env = new char*[temp.size()  + 1];
@@ -95,19 +104,9 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 	}
 	env[i] = NULL;
 	// Just for printing
-	for (i = 0; env[i]; i++) {
-	   ; // std::cout << env[i] << std::endl;
-	}
-
-	// char *request_method2 = (char*)"REQUEST_METHOD=GET";
-	// char* ENV[25] = {
-	// 	(char*)"COMSPEC=", (char*)"DOCUMENT_ROOT=", (char*)"GATEWAY_INTERFACE=", (char*)"HTTP_ACCEPT=", (char*)"HTTP_ACCEPT_ENCODING=",             
-	// 	(char*)"HTTP_ACCEPT_LANGUAGE=", (char*)"HTTP_CONNECTION=", (char*)"HTTP_HOST=", (char*)"HTTP_USER_AGENT=", (char*)"PATH=",            
-	// 	(char*)"QUERY_STRING=", (char*)"REMOTE_ADDR=", (char*)"REMOTE_PORT=", request_method2, (char*)"REQUEST_URI=", (char*)"SCRIPT_FILENAME=",
-	// 	(char*)"SCRIPT_NAME=", (char*)"SERVER_ADDR=", (char*)"SERVER_ADMIN=", (char*)"SERVER_NAME=",(char*)"SERVER_PORT=",(char*)"SERVER_PROTOCOL=",     
-	// 	(char*)"SERVER_SIGNATURE=", (char*)"SERVER_SOFTWARE=", NULL
-	// };
-
+	//for (i = 0; env[i]; i++) {
+	//   std::cout << env[i] << std::endl;
+	//}
 
 	// Prepare the array of the correct command/cgi file to be executed
 	// The path of the executable must be according to the 'action file' from the URL
@@ -141,22 +140,15 @@ void Request::callCGI(RequestData reqData, int fdClient) {
 
 
 
-
-
-
-
-
-
 // Some of arguments not used
-void printPathParts(std::string str, std::string strTrim, std::string path,
-					std::string fileName, RequestData reqData) {
-	(void)path;
-	(void)fileName;
+void printPathParts(std::string str, RequestData reqData) {
 
-	std::cout << "Found path:   [" << BLU << str << RES "]\n";
-	std::cout << "Path trimmed: [" << BLU << strTrim << RES "]\n";
-	std::cout << "Path part:    [" << MAG << reqData.getPathFirstPart() << RES "]\n";
-	std::cout << "File/Folder:  [" << MAG << reqData.getPathLastWord() << RES "]\n";
+	std::cout << "Found path:      [" << BLU << str << RES "]\n";
+//	std::cout << "Path trimmed:    [" << BLU << strTrim << RES "]\n";
+	std::cout << "Path:            [" << MAG << reqData.getPath() << RES "]\n";
+	std::cout << "Path first part: [" << MAG << reqData.getPathFirstPart() << RES "]\n";
+	std::cout << "File/Folder:     [" << MAG << reqData.getPathLastWord() << RES "]\n";
+	std::cout << "File extention:  [" << MAG << reqData.getFileExtention() << RES "]\n";
 
 	std::map<std::string, std::string> formData;
 	formData = reqData.getFormData();
@@ -178,7 +170,7 @@ int checkIfFileExists (const std::string& path) {
 	std::ifstream file(path.c_str());
 
 	if (!(file.is_open())) {
-		std::cout << RED "File " << path << " not found\n" RES;
+		std::cout << RED "Error: File " << path << " not found\n" RES;
 		return (-1);
 	}
 	std::cout << GRN "File " << path << " exists\n" RES;
@@ -187,17 +179,19 @@ int checkIfFileExists (const std::string& path) {
 
 
 
-int checkTypeOfFile(const std::string path) {
+int Request::checkTypeOfFile() {
 	
-	std::string temp = path;
+	std::string path = _data.getPath();
+	std::string temp = _data.getPath();
+
 	if (path[0] == '.')
 		temp = path.substr(1, std::string::npos);
 
 	std::size_t found = temp.find_last_of(".");
 
 	if (found != std::string::npos) {
-		std::string extention = temp.substr(found, std::string::npos);
-		std::cout << GRN "Found Extension: [" << extention << "]\n" RES;
+		// std::string extention = temp.substr(found, std::string::npos);
+		_data.setFileExtention(temp.substr(found, std::string::npos));
 	}
 	else
 		std::cout << GRN "There is no extention in the last name\n" RES;
@@ -272,16 +266,23 @@ std::map<std::string, std::string> Request::storeFormData(std::string &queryStri
 
 
 
-// Last word in path must be a folder (last '/' found)
-// The 2nd and 3rd args not needed anymore
-// void	Request::storePath_and_FolderName(std::string path, std::string pathFirstPart, std::string pathLastWord, RequestData reqData) {
+// If last '/' is found in path, the this is a folder, not file
 void	Request::storePath_and_FolderName(std::string path) {
 
-	int 	pos1	= 0;
-	int		pos2	= 0;
+	size_t 	pos1	= 0;
+	size_t	pos2	= 0;
 	size_t 	count	= 0;
-	pos2 			= path.find_first_of("/");
 
+	std::cout << CYN "StorePath() " << path << "\n" RES;
+
+	// Check if there is query '?' and store path before it
+	_data.setPath(path);
+	pos1 = path.find_first_of("?");
+	if (pos1 != std::string::npos)
+		_data.setPath(path.substr(0, pos1));
+
+	pos1	= 0;
+	pos2	= path.find_first_of("/");
 	while (count < path.length()) {
 		if ((count = path.find("/", count)) != std::string::npos) {
 			pos1 = pos2;
@@ -300,8 +301,11 @@ void	Request::storePath_and_FolderName(std::string path) {
 // Found GET Method with '?' Form Data
 void	Request::storePathParts_and_FormData(std::string path) {
 
-	int temp				= path.find_first_of("?");
+	int			temp		= path.find_first_of("?");
 	std::string tempStr		= path.substr(0, temp);
+
+	_data.setPath(path.substr(0, temp));
+	//std::cout << CYN "StorePathParts() " << _data.getPath() << "\n" RES;
 	int posLastSlash 		= tempStr.find_last_of("/");
 	int	posFirstQuestMark	= path.find_first_of("?");
 	std::string	queryString	= path.substr(temp, std::string::npos);
@@ -325,11 +329,10 @@ void	Request::storePathParts_and_FormData(std::string path) {
 
 
 int Request::parsePath(std::string str, int fdClient) {
-	// maybe also trim white spaces front and back
-//	Request		req;
+
 	std::string path			= removeDuplicateSlash(str);
 	size_t		ret				= 0;
-	std::string pathLastWord	= "";
+//	std::string pathLastWord	= "";
 	
 
 	if (path == "")
@@ -340,137 +343,30 @@ int Request::parsePath(std::string str, int fdClient) {
 	else if (path.back() == '/'  && (path.find("?") == std::string::npos)) {
 		std::cout << GRN "The path has no GET-Form data. Last char is '/', it must be a folder.\n" RES;
 		storePath_and_FolderName(path);
-		printPathParts(str, path, "", "", getRequestData());
 	}
 
 	// if the last char is not slash /   then look for question mark 
 	else if ((ret = path.find("?")) == std::string::npos ) {
 		std::cout << GRN "There is no Form data, the '?' not found\n" RES;
+		_data.setPath(path);
 		int pos			= 0;
 		pos				= path.find_last_of("/");	
-
 		_data.setPathFirstPart(path.substr(0, pos));
 		_data.setPathLastWord(path.substr(pos, std::string::npos));
-		printPathParts(str, path, "", "", getRequestData());
 	}
 	
 	else if ((ret = path.find("?")) != std::string::npos) {			// Found '?' in the path
 		std::cout << GRN "There is GET Form data, the '?' is found\n" RES;
 		storePathParts_and_FormData(path);
-		printPathParts(str, path, "", "", getRequestData());
 	}
 
 	checkIfFileExists(path);	// What in case of root only "/"  ???
-	checkTypeOfFile(path);
-
+	checkTypeOfFile();
+	printPathParts(str, getRequestData());
 
 	(void)fdClient;
 	//callCGI(getRequestData(), fdClient);
-
-
-
-	//checkTypeOfFile(_data.getPathLastWord());
-	//std::cout << RED "Last word " << _data.getPathLastWord() << RES "\n";
 	return (0);
 }
-
-
-/*
-localhost:8080/folder//////folder/something.html?city=Tokio&street=Singel
-*/
 
 } // namespace data
-
-
-
-#include <iostream>
-#include <string>
-int mainXXXXX()
-{
-
-
-
-
-	//Request request;
-	// parsePath("/");
-	// parsePath("/home/");						// must be folder
-	// parsePath("/home");							// check if folder or file
-	
-	// parsePath("//////home/////folderA/");                	// must be folder
-	// parsePath("/home////folderB/");                	// must be folder
-	// parsePath("/home/folderC/////");                 	// check if folder or file
-	// parsePath("/home/folderD");                 	// check if folder or file
-	
-	
-	// parsePath("/home/index.html");                 	// check if folder or file
-	// parsePath("/home/folderD/index.html?street=///singel///");                 	// check if folder or file
-
-	// parsePath("/home/index.html/");             	// check if folder or file
-	// parsePath("/home/folder/index.html");		// check if folder or file
-	// parsePath("/home/folder/response.php");		// check if folder or file
-	// parsePath("/home/folder/response.php?street=Singel&city=London");
-
-	//request.parsePath("kostja.se////folder//folder/folder/folder///folder/folder//index.html?city=tokio&street=singel", 33);
-	
-	
-
-	//std::cout << data::checkIfFileExists("test.html") << "\n";
-	//std::cout << data::checkIfFileExists("_testFolder") << "\n";
-	
-	
-	return (0);
-}
-
-
-
-
-/*	EXAMPLE SENDING A FILE
-void	send(int port, std::string filename)
-{
-	int					sock;
-	struct sockaddr_in	serv_addr;
-	char				buffer[4096] = {0};
-	std::fstream		file;
-	std::string			content;
-
-	file.open(filename);
-	content.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
-	file.close();
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
-	{
-		std::cout << std::endl << RED << "< Socket creation error >" << RESET << std::endl << std::endl;
-		return ;
-	}
-
-	memset(&serv_addr, 0, sizeof(serv_addr));
-	serv_addr.sin_family = AF_INET;
-	serv_addr.sin_addr.s_addr = htonl(INADDR_ANY);
-	serv_addr.sin_port = htons(port);
-
-
-	if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-	{
-		std::cout << std::endl << RED << "< Connection failed >" << RESET << std::endl << std::endl;
-		return ;
-	}
-
-	content += "\r\n";
-
-	std::cout << std::endl << "Sending :" << std::endl;
-	std::cout << "[" << RED << content << RESET << "]" << std::endl << std::endl;
-
-	send(sock, content.c_str(), content.size(), 0);
-	read(sock, buffer, 4095);
-
-	std::cout << std::endl << "Response :" << std::endl;
-	std::cout << "[" << GREEN << std::string(buffer) << RESET << "]" << std::endl << std::endl;
-
-	close(sock);
-
-	return ;
-}
-*/
-
-
-

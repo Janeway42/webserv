@@ -17,10 +17,12 @@ RequestData::RequestData() {
     _reqHost 			= "default Host";	// not sure if all these are needed
     _reqContentLength	= 0;
 	
+	_path				= "default";
 	_pathFirstPart		= "default";
 	_pathLastWord		= "default";
-	_queryString		= "default";
-	_cgiBody			= "default";
+	_fileExtention		= "";
+	_queryString		= "";
+	_cgiBody			= "";
 //	_formList			= NULL;	// ???
 //	_formData			= NULL;	// ???
 }
@@ -66,14 +68,20 @@ const std::string RequestData::getRequestContentType() const {
 
 
 // PATH PARTS AND QUERY_STRING (FORM DATA)
-const std::string RequestData::getQueryString() const {
-	return _queryString;
+const std::string RequestData::getPath() const {
+	return _path;
 }
 const std::string RequestData::getPathFirstPart() const {
 	return _pathFirstPart;
 }
 const std::string RequestData::getPathLastWord() const {
 	return _pathLastWord;
+}
+const std::string RequestData::getFileExtention() const {
+	return _fileExtention;
+}
+const std::string RequestData::getQueryString() const {
+	return _queryString;
 }
 const std::string RequestData::getCgiBody() const {
 	return _cgiBody;
@@ -128,14 +136,20 @@ void RequestData::setRequestContentType(std::string reqContentType)
 
 
 // PATH PARTS AND QUERY_STRING (FORM DATA)
-void RequestData::setQueryString(std::string queryString) {
-	_queryString = queryString;
+void RequestData::setPath(std::string path) {
+	_path = path;
 }
 void RequestData::setPathFirstPart(std::string pathFirstPart) {
 	_pathFirstPart = pathFirstPart;
 }
 void RequestData::setPathLastWord(std::string pathLastWord) {
 	_pathLastWord = pathLastWord;
+}
+void RequestData::setFileExtention(std::string fileExtention) {
+	_fileExtention = fileExtention;
+}
+void RequestData::setQueryString(std::string queryString) {
+	_queryString = queryString;
 }
 void RequestData::setCgiBody(std::string cgiBody) {
 	_cgiBody = cgiBody;
@@ -146,7 +160,6 @@ void RequestData::setFormData(std::map<std::string, std::string> formData) {
 void RequestData::setFormList(std::vector<std::string> formList) {
 	_formList = formList;
 }
-
 
 
 } // data

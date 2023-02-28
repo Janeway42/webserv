@@ -67,6 +67,8 @@ namespace data {
 			void	storePathParts_and_FormData(std::string path);
 			void	storePath_and_FolderName(std::string path);
 			void 	callCGI(RequestData reqData, int fdClient);
+			int		checkTypeOfFile();
+
 			
 
 
