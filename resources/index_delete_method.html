@@ -1,0 +1,35 @@
+<head>
+    <link rel="icon" href="data:,">
+</head>
+
+
+<body>
+<p> This is the file index_delete_method.html</p>
+
+
+
+<p> METHOD DELETE:</p>
+
+<form method="DELETE" action="delete_data.php">
+  <label for="data_id">Enter path of the file:</label>
+  <input type="text" name="path_to_file" id="id_not_set">
+  <br><br>
+  <input type="submit" value="Delete Data">
+</form>
+
+
+
+<!-- 
+    <?php
+    if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+      $data_id = $_REQUEST['data_id'];
+      
+      // Code to delete data with the given ID from the server
+      // ...
+      
+      echo "Data deleted successfully.";
+    } else {
+      header("HTTP/1.0 405 Method Not Allowed");
+      echo "HTTP/1.0 405 Method Not Allowed";
+    }
+?> -->

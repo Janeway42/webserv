@@ -105,6 +105,7 @@ std::string storeFolderContent(char *path) {
 		std::cout << "Error: Execve failed: " << ret << "\n";
 	}
 	else {
+		wait(NULL);
 		close(fd[1]);
 		char buff[100];
 		dup2(fd[0], 0);
@@ -120,11 +121,11 @@ std::string storeFolderContent(char *path) {
 	return (incomingStr);
 }
 
-//int main()
-//{
-//	std::string path = "../resources/_folderA/folderB/";
-//	std::string folderContentStr = storeFolderContent((char*)path.c_str());
-//	makeHtmlString(folderContentStr, path);
-//
-//	return (0);
-//}
+int main()
+{
+	std::string path = "../resources/_folderA/folderB/";
+	std::string folderContentStr = storeFolderContent((char*)path.c_str());
+	makeHtmlString(folderContentStr, path);
+
+	return (0);
+}

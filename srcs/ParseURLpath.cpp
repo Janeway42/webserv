@@ -7,9 +7,13 @@
 #include <unistd.h>
 
 /*
-	What happens if you dont have a form on your page, but you directly write ?city=aaa in the URL?
-	In this case, no action file is specified ???
 
+NORMAL GET PAGE vs RELOAD --------------------
+	Normal get page does not send in the header, the field 'If-Modified-Since: Mon, 13 Feb 2023 21:58:52 GMT'
+	It returns OK 200
+
+	Reload button sends in the header, 'If-modified-since ...'
+	Then, if the page has not been modified, the response will have the code 304: Not modified.
 
 */
 

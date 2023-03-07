@@ -1,4 +1,5 @@
-#include "WebServer.hpp"  // jaka
+// #include "WebServer.hpp"
+#include "../includes/WebServer.hpp"  // jaka
 
 WebServer::WebServer(std::string const & configFileName)
 {
@@ -167,6 +168,8 @@ void WebServer::readRequest(struct kevent& event)
 		std::cout << "just passing by\n";
 }
 
+
+
 void WebServer::sendResponse(struct kevent& event)
 {
 	data::Request *storage = (data::Request *)event.udata;
@@ -193,29 +196,32 @@ void WebServer::sendResponse(struct kevent& event)
 	{
 		std::string temp = (storage->getRequestData()).getHttpPath();
 
-		if (temp.find(".png") != std::string::npos) {
-			// sendImmage(event, "./resources/immage.png");
-			// sendImmage(event, "./resources/img_36kb.jpg");
-			// sendImmage(event, "./resources/img_109kb.jpg");
-			// sendImmage(event, "./resources/img_938kb.jpg");
-			// sendImmage(event, "./resources/img_5000kb.jpg");
-			 sendImmage(event, "./resources/img_13000kb.jpg");
+		// METHOD GET AND NO FORM
+		if (storage->getRequestData().getFileExtention() == ".html" && storage->getRequestData().getQueryString() == "") { 
+			std::cout << YEL "   Method get, just file, no form. File path [" << storage->getRequestData().getPath() << "]\n" RES;
+			sendResponseFile(event, storage->getRequestData().getPath());
 		}
-		else {
+		// IT'S NOT CGI REQUEST, AND IF PATH IS A FILE (NOT FOLDER), AND IF THIS FILE EXISTS
+		else if (storage->getRequestData().getFileExtention() == ".php" && storage->getRequestData().getQueryString() != "") { 
+			std::cout << YEL "   Method get/post WITH form. File path [" << storage->getRequestData().getPath() << "]\n" RES;
+			sendResponseFile(event, "./resources/index_should_be_cgi_content.html");
+		}
+		// IT IS AN IMAGE
+		else if (storage->getRequestData().getFileExtention() == ".jpg" || storage->getRequestData().getFileExtention() == ".png") {
+			std::cout << YEL "   Method get IMAGE. File path [" << storage->getRequestData().getPath() << "]\n" RES;
+			sendImmage(event, storage->getRequestData().getPath());
+		}
+		// IF PATH IS A FOLDER AND IF THERE IS INDEX.HTML IN THE FOLDER
+		else
+		{	
 			std::vector<ServerData>::iterator it_server = _servers.begin();
     		for (; it_server != _servers.cend(); ++it_server) {
 				std::cout << "Index file: " << it_server->getIndexFile().c_str() << std::endl;
-				// sendResponseFile(event, it_server->getIndexFile());
-				sendResponseFile(event, "./resources/bible.html");
+				sendResponseFile(event, it_server->getIndexFile());
 				break;
 			}
-			//sendResponseFile(event, "./resources/index_just_text.html");
-			// sendResponseFile(event, "./resources/index_just_image.html");
-			// sendResponseFile(event, "./resources/index_post_form.html");
-			// sendResponseFile(event, "./resources/index_get_form.html");
-			// sendResponseFile(event, "./resources/index_dummy.html");
-			// sendResponseFile(event, "./resources/bible.html");
 		}
+
 		if (removeEvent(event, EVFILT_WRITE) == 1)
 			throw ServerException("failed kevent EV_DELETE client - send success");
 		closeClient(event);
@@ -371,53 +377,6 @@ void WebServer::sendImmage(struct kevent& event, std::string imagePath) {
 		}
 	}
 }
-
-/* OLD SEND_IMAGE
-void WebServer::sendImmage(struct kevent& event, std::string imagePath)
-{
-	std::cout << RED "FOUND extention .jpg or .png\n" RES;
-
-	FILE *file;
-	unsigned char *buffer;
-	unsigned long imageSize;
-
-	file = fopen(imagePath.c_str(), "rb");
-	if (!file)
-	{
-		std::cerr << "Unable to open file\n";
-		return ;
- 	}
-
-	fseek(file, 0L, SEEK_END);	// Get file length
-	imageSize = ftell(file);
-	fseek(file, 0L, SEEK_SET);
-
-	std::string temp = std::to_string(imageSize);
-	std::string contentLen = "Content-Length: ";
-	contentLen.append(temp);
-	contentLen.append("\r\n");
-
-	std::string headerBlock = 	"HTTP/1.1 200 OK\r\n"
-								"accept-ranges: bytes\r\n"
-								"Content-Type: image/jpg\r\n";
-	headerBlock.append(contentLen);
-	headerBlock.append("accept-ranges: bytes");
-	headerBlock.append("\r\n\r\n");
-
-	buffer = (unsigned char *)malloc(imageSize);
-	if (!buffer)
-		{ fprintf(stderr, "Memory error!"); fclose(file); return ; }
-
-	int ret = fread(buffer, sizeof(unsigned char), imageSize, file);
-	std::cout << YEL "Returned fread:     " << ret << RES "\n";
-	
-	ret = send(event.ident, headerBlock.c_str(), headerBlock.length(), 0);
-	ret = send(event.ident, reinterpret_cast <const char* >(buffer), imageSize, 0);
-	std::cout << YEL "Image sent, returned from send() image: " << ret << RES "\n";
-	fclose(file);
-	free(buffer);
-}
-*/
 
 
 // --------------------------------------------------------- get functions
