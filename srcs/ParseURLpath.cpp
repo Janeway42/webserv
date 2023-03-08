@@ -15,6 +15,68 @@ NORMAL GET PAGE vs RELOAD --------------------
 	Reload button sends in the header, 'If-modified-since ...'
 	Then, if the page has not been modified, the response will have the code 304: Not modified.
 
+CHatGPT about kqueue
+	After creating a kq, you can register file descriptors with it.
+	You also register a list of events that a program is interested in: 
+				ie:		EV_SET(&event, fd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, NULL);
+	Now, the kq monitors this file descriptor for when it will become 'ready for writing'.
+		(In case it is already busy writing.)
+	
+	When the FD becomes 'ready for writing', this is the Event!
+	Now the kernel starts notifying the process about this FDs readiness.
+
+	When an event occurs, the kernel provides info about which FD triggered 
+	the event, and what type of event occurred.
+		What is ment by an event?
+			- Read readiness: the file descriptor has data available for reading.
+			- Write readiness: the file descriptor is ready to accept data for writing.
+			- Closed: the file descriptor has been closed by the other end.
+			- Error: an error has occurred on the file descriptor.
+
+			The event 'write readiness' does not yet happen, when you associate a FD with 
+			the filter 'EVFILT_WRITE' (via EV_SET). This only tells the kernel to monitor this FD
+			for the future events 'write readiness'.
+			So, the kernel keeps notifying the process, that the FD is 'ready for writing'.
+			This can affect CPU usage. So, the event should only be monitored, when we plan to use write().
+			Otherwise, this event/filter should be removed from the kqueue.
+
+			So, what exactly triggers the event 'ready for writing'?
+			Now the this event 'readiness' is added to kqueue.
+			This means that the FD is ready for writing.
+			The kernel will now monitor the FD for events 'write readiness'.
+
+
+*/
+
+/*
+	What do you mean by 'kqueue event'?
+	In the context of kqueue, an event refers to a change in the state of a file descriptor that our program is interested in monitoring. Examples of events include:
+
+		- Read readiness: the file descriptor has data available for reading.
+		- Write readiness: the file descriptor is ready to accept data for writing.
+		- Closed: the file descriptor has been closed by the other end.
+		- Error: an error has occurred on the file descriptor.
+		- etc ...
+
+	You add a file descriptor to a kqueue by using EV_SET() and the EVFILT_WRITE filter.
+	This does not yet make the file descriptor 'ready for writing'.
+	(Because this FD might be busy for another reason.)
+
+	Now the kernel will monitor the registered FD for the event 'write readiness'.
+	When this event occur, the kernel will send a notification to the program (together with additional relevant information, such as the amount of data available for reading ...)
+
+	The event 'write readiness' is triggered when a FD is ready to accept data for writing without blocking. You can now write to this file descriptor without having to wait for it to become available.
+
+	If you don't write anything to this FD, the kernel still keeps notifying the program.
+	This can affect CPU usage. So, this event 'write readiness' should only be monitored, when we plan to use write(). Otherwise, this event/filter should be removed from the kqueue.
+	
+
+
+
+
+
+	Instead, it tells the kernel to monitor the file descriptor for write readiness events, and to notify the program when the file descriptor becomes ready for writing. The kernel will then trigger a write readiness event when the file descriptor is ready for writing. Then the program can respond by writing to the file descriptor without blocking.
+
 */
 
 
