@@ -6,6 +6,32 @@
 #include <vector>
 #include <unistd.h>
 
+
+#include <sys/types.h>	// send()
+#include <sys/socket.h> // send()
+#include <sys/stat.h>  // stat()
+
+/*
+	setError() ---> shall we immediately set a number, instead of boolean?
+
+	Check if we have accoring to subject: 
+		- No send/recv should go outside of kqueue. What about cgi read input and cgi write output???
+
+
+		- Check with Nginx, how errors work with limited body size, limited querystring size, etc ...
+		- Error pages, when cgi has an error, cgi sleeps, ...
+				- when page not found, when folder without autoindex
+
+	Evalsheet:
+
+
+	Curl commands:
+		- curl --resolve example.com:80:127.0.0.1 http://example.com/
+
+*/
+
+
+
 /*
 
 NORMAL GET PAGE vs RELOAD --------------------
@@ -14,7 +40,9 @@ NORMAL GET PAGE vs RELOAD --------------------
 
 	Reload button sends in the header, 'If-modified-since ...'
 	Then, if the page has not been modified, the response will have the code 304: Not modified.
+*/
 
+/*
 CHatGPT about kqueue
 	After creating a kq, you can register file descriptors with it.
 	You also register a list of events that a program is interested in: 
@@ -27,29 +55,7 @@ CHatGPT about kqueue
 
 	When an event occurs, the kernel provides info about which FD triggered 
 	the event, and what type of event occurred.
-		What is ment by an event?
-			- Read readiness: the file descriptor has data available for reading.
-			- Write readiness: the file descriptor is ready to accept data for writing.
-			- Closed: the file descriptor has been closed by the other end.
-			- Error: an error has occurred on the file descriptor.
 
-			The event 'write readiness' does not yet happen, when you associate a FD with 
-			the filter 'EVFILT_WRITE' (via EV_SET). This only tells the kernel to monitor this FD
-			for the future events 'write readiness'.
-			So, the kernel keeps notifying the process, that the FD is 'ready for writing'.
-			This can affect CPU usage. So, the event should only be monitored, when we plan to use write().
-			Otherwise, this event/filter should be removed from the kqueue.
-
-			So, what exactly triggers the event 'ready for writing'?
-			Now the this event 'readiness' is added to kqueue.
-			This means that the FD is ready for writing.
-			The kernel will now monitor the FD for events 'write readiness'.
-
-
-*/
-
-/*
-	What do you mean by 'kqueue event'?
 	In the context of kqueue, an event refers to a change in the state of a file descriptor that our program is interested in monitoring. Examples of events include:
 
 		- Read readiness: the file descriptor has data available for reading.
@@ -69,13 +75,9 @@ CHatGPT about kqueue
 
 	If you don't write anything to this FD, the kernel still keeps notifying the program.
 	This can affect CPU usage. So, this event 'write readiness' should only be monitored, when we plan to use write(). Otherwise, this event/filter should be removed from the kqueue.
-	
+*/
 
-
-
-
-
-	Instead, it tells the kernel to monitor the file descriptor for write readiness events, and to notify the program when the file descriptor becomes ready for writing. The kernel will then trigger a write readiness event when the file descriptor is ready for writing. Then the program can respond by writing to the file descriptor without blocking.
+/*
 
 */
 
@@ -273,10 +275,33 @@ int checkIfFileExists (const std::string& path) {
 
 	if (!(file.is_open())) {
 		std::cout << RED "Error: File " << path << " not found\n" RES;
+		std::cout << RED "THIS FILE DOES NOT EXIST ON SERVER, SEND THE ERROR PAGE!\n" RES;
 		return (-1);
 	}
 	std::cout << GRN "File/folder " << path << " exists\n" RES;
 	return 0;
+}
+
+
+int	checkIfFileOrFolder(std::string path) {
+	struct stat path_stat;
+
+	if (stat(path.c_str(), &path_stat) == 0) {
+		if (S_ISREG(path_stat.st_mode)) {
+			std::cout << GRN "Path is a file\n" RES;
+			return (1);
+		} else if (S_ISDIR(path_stat.st_mode)) {
+			std::cout <<  GRN "Path is a folder\n" RES;
+			return (2);
+		} else {
+			std::cout <<  GRN "Path is neither a filer nor s folder\n" RES;
+			return (-1);
+		}
+	} else {
+		std::cout <<  RED "Error: failed to stat path\n" RES;
+		return (-1);
+	}
+	//return (0);
 }
 
 
@@ -483,10 +508,15 @@ int Request::parsePath(std::string str, int fdClient) {
 	}
 
 	//std::cout << GRN "XXX)\n" RES;
-	checkIfFileExists(_data.getPath());	// What in case of root only "/"  ???
-								// What is case of GET??
+	if (checkIfFileExists(_data.getPath()) == -1) {	// What in case of root only "/"  ???
+		setError(true);								// What in case of GET??
+	}
 	checkTypeOfFile();
 	
+	if (checkIfFileOrFolder(_data.getPath()) == -1) {
+		setError(true);
+	}
+
 	printPathParts(str, getRequestData());
 
 	(void)fdClient;

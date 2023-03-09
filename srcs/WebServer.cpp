@@ -212,6 +212,11 @@ void WebServer::sendResponse(struct kevent& event)
 			sendImmage(event, storage->getRequestData().getPath());
 		}
 		// IF PATH IS A FOLDER AND IF THERE IS INDEX.HTML IN THE FOLDER
+		// !!! BUT ALSO CHECK, IF THIS FOLDER PATH EXISTS AS THE LOCATION BLOCK !
+		// IF NOT, ERROR SHOULD BE RETURNED.
+		// IF YES, IT CHECKS IF THERE IS AN INDEX FILE
+		//     IN NO INDEX FILE, IT CHECKS IF AUTOINDEX IS ON/OFF
+		//			IF OFF, RETURN 'NOT ALLOWED'
 		else
 		{	
 			std::vector<ServerData>::iterator it_server = _servers.begin();
@@ -345,6 +350,16 @@ void WebServer::sendImmage(struct kevent& event, std::string imagePath) {
 	std::fstream imageFile;
 	std::string content;
 	imageFile.open(imagePath);
+
+	
+	// THIS HAS TO BE CHECKED BEFORE SENDING THE HEADER
+	//if (!imageFile) {
+		//std::cout << RED "THIS FILE DOES NOT EXIST ON SERVER, SEND THE ERROR PAGE!\n" RES;
+		//ret = send(event.ident, "HTTP/1.1 404 Not Found\n"
+		//						"Content-Type: text/html\n", 47, 0);
+	//}
+
+
 	content.assign(std::istreambuf_iterator<char>(imageFile), std::istreambuf_iterator<char>());
 	content += "\r\n";
 	imageFile.close();
