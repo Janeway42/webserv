@@ -210,31 +210,77 @@ void WebServer::sendResponse(struct kevent& event)
 	else if ((int)event.ident == storage->getFdClient()) // the event belongs to the client fd 
 	{
 		// todo grab from string and put into buffer 
-		buffer = storage->getResponseData().getFullResponse();
-		ssize_t ret = send(event.ident, buffer.c_str(), buffer.length(), 0);
+		// std::string buffer = storage->getResponseData().getFullResponse();
+		std::string content = storage->getResponseData().getFullResponse();
+
+		// Jaka ******************************************************************************************************
+		// Send content and each time reduce the original by ret
+		unsigned long myRet;
+
+		storage->getResponseData().setFullLength(content.size());
+
+		std::cout << YEL"START SENDING,  _fullResponseLength " << storage->getResponseData().getFullLength() << RES"\n";
+		
+
+		myRet = send(event.ident, content.c_str(), content.size(), 0);
+		if (myRet == std::string::npos) {
+			if (storage->getResponseData().getFullLength() == storage->getResponseData().getSentSoFar()) {
+				std::cout << RED "    Everything sent ok." RES << "),  sentSoFar " << storage->getResponseData().getSentSoFar() << "\n";
+				// exit(0); // apparently it never comes here
+			}
+		}
+		else if (myRet != 0) {
+			storage->getResponseData().increaseSentSoFar(myRet);
+			storage->getResponseData().eraseSentChunkFromFullResponse(myRet);
+			std::cout << YEL "    Sent chunk " << myRet << RES << ",  sentSoFar " << storage->getResponseData().getSentSoFar() << "\n";
+		}
+		std::cout << YEL"    End sending, bytes sentSoFar: " << storage->getResponseData().getSentSoFar() << RES "\n";
+
+		// ******************************************************************************************************
+
+
+
+
+
+
+
+	//	ssize_t ret = send(event.ident, buffer.c_str(), buffer.length(), 0); // jaka temp disable
+
+
 
 		// to be researched how to solve if the first bloock was sent and then system fails  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		if (ret == -1)  // system failure 
+		// if (myRet == -1)  // system failure /// jaka
+		if (myRet < 0)  // system failure 
 		{
 			// if some of the message has been sent then send the error block - fixed position 
 			storage->getResponseData().overrideFullResponse();  // content length -> which has already been sent/ 
 		}
 		else
 		{	
-			storage->getResponseData().setBytesToClient(ret);
+			std::cout << CYN << "sentsofar)" << storage->getResponseData().getSentSoFar() << ", fullelength " << storage->getResponseData().getFullLength() << RES "\n";
+			//exit(0);
+			// storage->getResponseData().setBytesToClient(myRet); // jaka
 			if (storage->getResponseData().getOverride() == true)
 			{
+				std::cout << CYN << "b)" RES "\n";
+
 				removeFilter(event, EVFILT_WRITE, "failed kevent, EV_DELETE, EVFILT_WRITE, override on _fdClient");
 				removeFilter(event, EVFILT_TIMER, "failed kevent, EV_DELETE, EVFILT_TIMER, override on _fdClient");
 				closeClient(event);
 			}
-			else if (ret == 0 || ret != (ssize_t)buffer.length()); // added ret == 0 just to be according to the subject 
+			// else if (myRet == 0 || myRet != (ssize_t)buffer.length()); // added ret == 0 just to be according to the subject 
+			//else if (myRet == 0 || myRet != (unsigned long)buffer.length()); // jaka
 				// Jaka - keep track of what has been sent 
 				// erase first part of storage->getResponsedata().getFullResponse();
 			else
 			{
-				if (storage->getResponseData().getBytesToClient() == storage->getResponseData().getFullResponse().length())
+				std::cout << CYN "c) myRet: " << myRet << ", sentsofar " << storage->getResponseData().getSentSoFar() << ", fullelength " << storage->getResponseData().getFullLength() << RES "\n";
+
+				// if (storage->getResponseData().getBytesToClient() == storage->getResponseData().getFullResponse().length())
+				if (myRet == 0 && storage->getResponseData().getFullLength() == 0)
 				{
+					std::cout << CYN << "d)" RES "\n";
+
 					removeFilter(event, EVFILT_WRITE, "failed kevent, EV_DELETE, EVFILT_WRITE, success on _fdClient");
 					removeFilter(event, EVFILT_TIMER, "failed kevent, EV_DELETE, EVFILT_TIMER, success on _fdClient");
 					closeClient(event);

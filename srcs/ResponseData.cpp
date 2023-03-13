@@ -203,6 +203,33 @@ std::string ResponseData::streamFile(std::string file)
 	return (responseNoFav);
 }
 
+
+// ***************************************************************************
+// added JAKA, to erase the sent chunk from the remaining response content
+std::string&	ResponseData::eraseSentChunkFromFullResponse(unsigned long retBytes) {
+	return (_fullResponse.erase(0, retBytes));
+}
+
+size_t	ResponseData::getFullLength() { // jaka
+	return (_fullResponseLength);
+}
+
+size_t	ResponseData::getSentSoFar() { // jaka
+	return (_sentSoFar);
+}
+
+void 	ResponseData::setFullLength(size_t len) {
+	_fullResponseLength = len;
+}
+
+void	ResponseData::increaseSentSoFar(size_t bytesSent) {
+	_sentSoFar += bytesSent;
+}
+
+// ***************************************************************************
+
+
+
 // ---------------------------------------------------------------------------- get functions
 // ------------------------------------------------------------------------------------------
 

@@ -13,7 +13,7 @@ class ResponseData: public Parser
 {
 	private:
 		std::string _status;
-		std::string _length;
+		std::string _length;	// jaka, not sure what is this?
 		std::string _type;
 		
 		std::string _responseHeader;
@@ -21,8 +21,11 @@ class ResponseData: public Parser
 		std::string _fullResponse;
 		std::string _responsePath;
 
-		unsigned long _bytesToClient;
-		bool _errorOverride;
+		unsigned long 	_bytesToClient;
+		bool 			_errorOverride;
+
+		size_t 		_fullResponseLength;	// added jaka
+		size_t 		_sentSoFar;				// added jaka
 
 	public:
 		ResponseData();
@@ -32,9 +35,21 @@ class ResponseData: public Parser
 		std::string		getHeader();
 		std::string		getBody();
 		std::string&	getFullResponse();
+
+		// ***************************************************************************
+		// added jaka
+		size_t			getFullLength(); // jaka
+		size_t			getSentSoFar(); // jaka
+		std::string&	eraseSentChunkFromFullResponse(unsigned long retBytes); // added JAKA, to erase the sent chunk from the remaining response content
+		void 			setFullLength(size_t len);
+		void			increaseSentSoFar(size_t bytesSent);
+		// ***************************************************************************
+
+
+
 		std::string		getResponsePath();
 		std::string		getResponseBody();
-		unsigned long			getBytesToClient();
+		unsigned long	getBytesToClient();
 		bool			getOverride();
 
 		//setters
